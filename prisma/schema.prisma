@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+//----------------------------------------------
+// User & Account (Teacher accounts are Users)
+//----------------------------------------------
+model User {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  email          String?   @unique
+  DateOfBirth    DateTime?
+  image          String?
+  hashedPassword String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastUpdated    DateTime?
+  lastLogin      DateTime?
+  accounts       Account[]
+
+  // Teacher-created entities
+  subjects          Subject[]           @relation("UserSubjects")
+  projects          Project[]           @relation("UserProjects")
+  studentLists      StudentList[]
+  StudentListUpload StudentListUpload[]
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_set       Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+//----------------------------------------------
+// Fixed Outcome Codes as an Enum (12 PO and 3 PSO)
+//----------------------------------------------
+enum OutcomeCode {
+  PO1
+  PO2
+  PO3
+  PO4
+  PO5
+  PO6
+  PO7
+  PO8
+  PO9
+  PO10
+  PO11
+  PO12
+  PSO1
+  PSO2
+  PSO3
+}
+
+//----------------------------------------------
+// Subjects and Course Outcomes (CO)
+//----------------------------------------------
+model Subject {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  code      String? // Optional subject code
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The teacher who created the subject
+  createdBy   User   @relation("UserSubjects", fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  // A subject can have many COs
+  cos CO[]
+
+  // Projects for this subject
+  projects Project[]
+
+  // Student list uploads (if needed)
+  studentListUploads StudentListUpload[]
+}
+
+model CO {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  subject     Subject @relation(fields: [subjectId], references: [id])
+  subjectId   String  @db.ObjectId
+  code        String // e.g., "CO1", "CO2", etc.
+  description String?
+
+  // Mapping of this CO to all fixed outcomes (POs and PSOs)
+  coMappings COMapping[]
+
+  // Questions (from project question papers) mapped to this CO
+  projectQuestions ProjectQuestion[]
+}
+
+model COMapping {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Link to a subject CO
+  co   CO     @relation(fields: [coId], references: [id])
+  coId String @db.ObjectId
+
+  // Outcome code (static, fixed outcomes)
+  outcomeCode OutcomeCode
+
+  // Level assigned (0 to 3)
+  level Int
+}
+
+//----------------------------------------------
+// Projects and Project Questions
+//----------------------------------------------
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  // Link to the subject (thus, its COs and mappings are available)
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String  @db.ObjectId
+
+  // Teacher who created the project
+  createdBy   User   @relation("UserProjects", fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  // Project questions (each mapped to one of the subject's CO)
+  questions ProjectQuestion[]
+}
+
+model ProjectQuestion {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  project      Project @relation(fields: [projectId], references: [id])
+  projectId    String  @db.ObjectId
+  questionText String
+
+  // The question is mapped to a subject CO (and through COMapping, to fixed outcomes)
+  co   CO     @relation(fields: [coId], references: [id])
+  coId String @db.ObjectId
+}
+
+//----------------------------------------------
+// Student List (associated with a Teacher)
+//----------------------------------------------
+model StudentList {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  batchYear Int
+
+  // Associated teacher (a student list belongs to a single teacher)
+  teacher   User   @relation(fields: [teacherId], references: [id])
+  teacherId String @db.ObjectId
+
+  // List of students in this batch
+  students StudentInList[]
+}
+
+model StudentInList {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  studentList   StudentList @relation(fields: [studentListId], references: [id])
+  studentListId String      @db.ObjectId
+
+  name       String
+  rollNumber String
+}
+
+//----------------------------------------------
+// Optional: Student List File Uploads
+//----------------------------------------------
+model StudentListUpload {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  fileUrl      String // URL/path to the uploaded student list file
+  originalName String? // Optional original filename
+  uploadedAt   DateTime @default(now())
+
+  // Association with the subject for which the student list is uploaded
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String  @db.ObjectId
+
+  // Teacher who uploaded the student list
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+  uploadedById String @db.ObjectId
+}
