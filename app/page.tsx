@@ -4,9 +4,7 @@ import Container from "./components/container";
 import getCurrentUser from "./actions/getCurrentUser";
 import EmptyState from "./components/EmptyState";
 
-
 export default async function Home() {
-
   const currentUser = await getCurrentUser();
   return (
     <div className="text-rose-500 text-2xl">
@@ -19,8 +17,14 @@ export default async function Home() {
 
           "
             >
-             
-             rsyfh
+              <div className="flex flex-col flex-1">
+                <div className="flex w-52 flex-col gap-4">
+                  <div className="skeleton h-32 w-full"></div>
+                  <div className="skeleton h-4 w-28"></div>
+                  <div className="skeleton h-4 w-full"></div>
+                  <div className="skeleton h-4 w-full"></div>
+                </div>
+              </div>
             </div>
           </div>
         </Container>

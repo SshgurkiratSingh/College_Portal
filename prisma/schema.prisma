@@ -87,8 +87,10 @@ model Subject {
   cos CO[]
 
   // Projects for this subject
-  projects Project[]
+  projects    Project[]
+  studentList StudentList? @relation(fields: [studentListId], references: [id])
 
+  studentListId String? @db.ObjectId
 }
 
 model CO {
@@ -153,9 +155,10 @@ model ProjectQuestion {
   co   CO?     @relation(fields: [coId], references: [id])
   coId String? @db.ObjectId
 }
+
 model StudentList {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   // Name of the student list (e.g. "CSE 2023 Batch")
+  name        String // Name of the student list (e.g. "CSE 2023 Batch")
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -168,12 +171,13 @@ model StudentList {
 
   // Students in this list
   students Student[]
+  Subject  Subject[]
 }
 
 model Student {
   id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  rollNo  String  // Student roll number
-  name    String  // Student name
+  rollNo  String // Student roll number
+  name    String // Student name
   email   String? // Optional student email
   section String? // Optional section
   batch   String? // Optional batch
@@ -185,7 +189,7 @@ model Student {
 
 model StudentListUpload {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  filename  String   // Original filename
+  filename  String // Original filename
   createdAt DateTime @default(now())
 
   // Link to User (Teacher)

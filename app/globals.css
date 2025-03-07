@@ -2,12 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+
 html,body,:root{
   height: 100%;
 }
 main{
-  background-image: url('/images/waal.jpeg');
-  min-height: 100vh; background-position: center;
+  background-image: url('/images/waa.jpeg');
+  min-height: 92vh; background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
   background-color: #000;

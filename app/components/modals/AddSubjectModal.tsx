@@ -1,31 +1,64 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
 import Modal from "./Modals";
-
-import useAddModal from "@/app/hooks/useAddModal";
+import useSubjectModal, { SubjectModalMode } from "@/app/hooks/useSubjectModal";
 import Heading from "../Heading";
-import CategoryInput from "../CategoryInput";
 import Input from "../inputs/Input";
-import ImageUpload from "../inputs/imageUpload";
-enum STEPS {
-  SUBJECTNAMEANDCODE = 0,
-  BATCHTOLINK = 1,
-  CO = 2,
-  LINKINGLEVELOFCOWITHPOPSO = 3,
-  MOREDETAILLIKECREDIT = 4,
 
+enum STEPS {
+  SUBJECT_DETAILS = 0,
+  COURSE_OUTCOMES = 1,
+  OUTCOME_MAPPING = 2,
 }
-const AddModal = () => {
+
+interface Student {
+  id: string;
+  rollNo: string;
+  name: string;
+  email?: string;
+}
+
+interface StudentList {
+  id: string;
+  name: string;
+  description: string;
+  students: Student[];
+}
+
+interface CourseOutcome {
+  id?: string;
+  name: string;
+  description: string;
+}
+
+interface OutcomeMapping {
+  outcomeId: string;
+  value: number; // 0-3
+}
+
+interface COMapping {
+  coId: string;
+  mappings: OutcomeMapping[];
+}
+
+const AddSubjectModal = () => {
   const router = useRouter();
-  const AddModal = useAddModal();
+  const subjectModal = useSubjectModal();
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(STEPS.CATEGORY);
+  const [step, setStep] = useState(STEPS.SUBJECT_DETAILS);
+  const [studentLists, setStudentLists] = useState<StudentList[]>([]);
+  const [programOutcomes, setProgramOutcomes] = useState<Record<string, string>>({});
+  const [courseOutcomes, setCourseOutcomes] = useState<CourseOutcome[]>([
+    { name: "CO1", description: "" }
+  ]);
+  const [mappings, setMappings] = useState<COMapping[]>([]);
+
   const {
     register,
     handleSubmit,
@@ -35,22 +68,76 @@ const AddModal = () => {
     reset,
   } = useForm<FieldValues>({
     defaultValues: {
-      category: "",
-      calories: 0,
-      availability: 1,
-      SubDes: "",
-      counter: 2,
-      imageSrc1: "",
-      imageSrc2: "",
-      price: 10,
-      title: "",
+      name: "",
+      code: "",
+      studentListId: "",
       description: "",
+      credits: 3,
     },
   });
-  const category = watch("category");
-  const SubDes = watch("SubDes");
-  const imageSrc1 = watch("imageSrc1");
-  const imageSrc2 = watch("imageSrc2");
+
+  const name = watch("name");
+  const code = watch("code");
+  const studentListId = watch("studentListId");
+  const description = watch("description");
+  const credits = watch("credits");
+
+  // Fetch student lists and program outcomes
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch student lists
+        const listsResponse = await axios.get("/api/student-lists");
+        setStudentLists(listsResponse.data);
+
+        // Fetch program outcomes
+        const outcomesResponse = await axios.get("/api/programOutcomes");
+        setProgramOutcomes(outcomesResponse.data);
+
+        // Initialize mappings for the first CO
+        if (courseOutcomes.length > 0) {
+          initializeMappings();
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load required data");
+      }
+    };
+
+    if (subjectModal.isOpen) {
+      fetchData();
+    }
+  }, [subjectModal.isOpen]);
+
+  // Initialize mappings when course outcomes change
+  useEffect(() => {
+    initializeMappings();
+  }, [courseOutcomes, programOutcomes]);
+
+  const initializeMappings = () => {
+    // Create an initial mapping structure for all COs
+    const initialMappings: COMapping[] = courseOutcomes.map((co) => {
+      // Check if a mapping already exists for this CO
+      const existingMapping = mappings.find(
+        (mapping) => mapping.coId === co.id
+      );
+
+      if (existingMapping) {
+        return existingMapping;
+      }
+
+      // Create a new mapping with all program outcomes set to 0
+      return {
+        coId: co.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+        mappings: Object.keys(programOutcomes).map((outcomeId) => ({
+          outcomeId,
+          value: 0,
+        })),
+      };
+    });
+
+    setMappings(initialMappings);
+  };
 
   const setCustomValue = (id: string, value: any) => {
     setValue(id, value, {
@@ -59,209 +146,368 @@ const AddModal = () => {
       shouldValidate: true,
     });
   };
+
   const onBack = () => {
-    setStep((v) => v - 1);
+    setStep((value) => value - 1);
   };
+
   const onNext = () => {
-    setStep((v) => v + 1);
+    setStep((value) => value + 1);
   };
+
+  const addCourseOutcome = () => {
+    const newCONumber = courseOutcomes.length + 1;
+    setCourseOutcomes([
+      ...courseOutcomes,
+      {
+        name: `CO${newCONumber}`,
+        description: "",
+      },
+    ]);
+  };
+
+  const removeCourseOutcome = (index: number) => {
+    if (courseOutcomes.length <= 1) {
+      toast.error("At least one Course Outcome is required");
+      return;
+    }
+
+    const updatedCOs = [...courseOutcomes];
+    updatedCOs.splice(index, 1);
+    setCourseOutcomes(updatedCOs);
+
+    // Also update mappings
+    const updatedMappings = [...mappings];
+    updatedMappings.splice(index, 1);
+    setMappings(updatedMappings);
+  };
+
+  const updateCourseOutcome = (
+    index: number,
+    field: keyof CourseOutcome,
+    value: string
+  ) => {
+    const updatedCOs = [...courseOutcomes];
+    updatedCOs[index] = { ...updatedCOs[index], [field]: value };
+    setCourseOutcomes(updatedCOs);
+  };
+
+  const updateMapping = (coIndex: number, outcomeId: string, value: number) => {
+    const updatedMappings = [...mappings];
+    const mappingIndex = updatedMappings[coIndex].mappings.findIndex(
+      (m) => m.outcomeId === outcomeId
+    );
+
+    if (mappingIndex !== -1) {
+      updatedMappings[coIndex].mappings[mappingIndex].value = value;
+      setMappings(updatedMappings);
+    }
+  };
+
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
-    if (step !== STEPS.SUBDES) {
+    if (step !== STEPS.OUTCOME_MAPPING) {
       return onNext();
     }
 
     setIsLoading(true);
 
+    // Prepare the final course outcomes with their IDs
+    const finalCourseOutcomes = courseOutcomes.map((co, index) => ({
+      ...co,
+      id: mappings[index]?.coId || undefined,
+    }));
+
+    // Create the subject data to submit
+    const subjectData = {
+      name: data.name,
+      code: data.code,
+      studentListId: data.studentListId,
+      description: data.description,
+      credits: parseInt(data.credits) || 3,
+      courseOutcomes: finalCourseOutcomes,
+      mappings: mappings,
+    };
+
     axios
-      .post("/api/addNew", data)
+      .post("/api/subjects", subjectData)
       .then(() => {
-        toast.success("Listing created!");
+        toast.success("Subject created successfully!");
         router.refresh();
         reset();
-        setStep(STEPS.CATEGORY);
-        AddModal.onClose();
+        setStep(STEPS.SUBJECT_DETAILS);
+        setCourseOutcomes([{ name: "CO1", description: "" }]);
+        setMappings([]);
+        subjectModal.onClose();
       })
-      .catch(() => {
-        toast.error("Something went wrong.");
+      .catch((error) => {
+        toast.error(error?.response?.data?.error || "Something went wrong.");
       })
       .finally(() => {
         setIsLoading(false);
       });
   };
 
-  const onToggle = useCallback(() => {
-    AddModal.onClose();
-  }, [AddModal]);
+  let bodyContent;
+  let actionLabel = "Next";
+  let secondaryActionLabel;
 
-  let bodyContent = (
-    <div className="flex flex-col gap-8">
-      <Heading
-        title="which of these best describes your property?"
-        subtitle="Pick a Category"
-      />
-      <div
-        className="
-        grid 
-        grid-cols-1 
-        md:grid-cols-2 
-        gap-3
-        max-h-[50vh]
-        overflow-y-auto
-      "
-      >
-        {categories.map((i) => (
-          <div key={i.label} className="col-span-1">
-            <CategoryInput
-              onClick={(category) => setCustomValue("category", category)}
-              selected={category === i.label}
-              icon={i.icon}
-              label={i.label}
-            />
+  // SUBJECT DETAILS STEP
+  if (step === STEPS.SUBJECT_DETAILS) {
+    bodyContent = (
+      <div className="flex flex-col gap-4">
+        <Heading
+          title="Create a Subject"
+          subtitle="Enter the details of your subject"
+        />
+
+        <div className="flex flex-col gap-4">
+          <Input
+            id="name"
+            label="Subject Name"
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
+            placeholderText="e.g., Digital Signal Processing"
+          />
+
+          <Input
+            id="code"
+            label="Subject Code"
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
+            placeholderText="e.g., EC301"
+          />
+
+          <div className="w-full">
+            <label className="block text-sm font-medium mb-2">
+              Student List
+            </label>
+            <select
+              id="studentListId"
+              disabled={isLoading}
+              {...register("studentListId", { required: true })}
+              className={`
+                w-full p-2 border rounded-md
+                ${errors.studentListId ? "border-red-500" : "border-gray-300"}
+              `}
+            >
+              <option value="">Select a student list</option>
+              {studentLists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ))}
+            </select>
+            {errors.studentListId && (
+              <span className="text-red-500 text-sm">
+                This field is required
+              </span>
+            )}
           </div>
-        ))}
+
+          <Input
+            id="description"
+            label="Description"
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            placeholderText="Brief description of the subject"
+          />
+
+          <Input
+            id="credits"
+            label="Credits"
+            type="number"
+            min={1}
+            max={10}
+            disabled={isLoading}
+            register={register}
+            errors={errors}
+            required
+          />
+        </div>
       </div>
-    </div>
-  );
-  if (step === STEPS.TITLEANDDESCRIPTION) {
+    );
+    actionLabel = "Next";
+    secondaryActionLabel = undefined;
+  }
+
+  // COURSE OUTCOMES STEP
+  else if (step === STEPS.COURSE_OUTCOMES) {
     bodyContent = (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         <Heading
-          title="Add Title and Description"
-          subtitle="Enter Title And Description for The item"
+          title="Course Outcomes"
+          subtitle="Define the Course Outcomes (COs) for this subject"
         />
 
-        <Input
-          id="title"
-          label="Title"
-          register={register}
-          errors={errors}
-          required
+        <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto px-1">
+          {courseOutcomes.map((co, index) => (
+            <div key={index} className="border p-4 rounded-md">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium">Course Outcome {index + 1}</h3>
+                <button
+                  type="button"
+                  onClick={() => removeCourseOutcome(index)}
+                  className="text-red-500 hover:text-red-700"
+                  disabled={courseOutcomes.length <= 1 || isLoading}
+                >
+                  Remove
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={co.name}
+                    onChange={(e) =>
+                      updateCourseOutcome(index, "name", e.target.value)
+                    }
+                    disabled={isLoading}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., CO1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={co.description}
+                    onChange={(e) =>
+                      updateCourseOutcome(index, "description", e.target.value)
+                    }
+                    disabled={isLoading}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="Describe this course outcome"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addCourseOutcome}
+            disabled={isLoading}
+            className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+          >
+            Add Course Outcome
+          </button>
+        </div>
+      </div>
+    );
+    actionLabel = "Next";
+    secondaryActionLabel = "Back";
+  }
+
+  // OUTCOME MAPPING STEP
+  else if (step === STEPS.OUTCOME_MAPPING) {
+    bodyContent = (
+      <div className="flex flex-col gap-4">
+        <Heading
+          title="Outcome Mapping"
+          subtitle="Map each Course Outcome to Program Outcomes with a value from 0 to 3"
         />
 
-        <Input
-          id="description"
-          label="Description"
-          register={register}
-          errors={errors}
-          required
-        />
+        <div className="text-sm text-gray-500 mb-2">
+          <p>Mapping values:</p>
+          <p>0 - No correlation (default)</p>
+          <p>1 - Low correlation</p>
+          <p>2 - Medium correlation</p>
+          <p>3 - High correlation</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full border divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Program Outcome
+                </th>
+                {courseOutcomes.map((co, index) => (
+                  <th
+                    key={index}
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {co.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {Object.entries(programOutcomes).map(
+                ([outcomeId, outcomeDesc]) => (
+                  <tr key={outcomeId}>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm">
+                      <div>
+                        <strong>{outcomeId}</strong>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {outcomeDesc.length > 50
+                          ? `${outcomeDesc.substring(0, 50)}...`
+                          : outcomeDesc}
+                      </div>
+                    </td>
+                    {courseOutcomes.map((_, coIndex) => (
+                      <td key={coIndex} className="px-4 py-2">
+                        <select
+                          value={
+                            mappings[coIndex]?.mappings.find(
+                              (m) => m.outcomeId === outcomeId
+                            )?.value || 0
+                          }
+                          onChange={(e) =>
+                            updateMapping(
+                              coIndex,
+                              outcomeId,
+                              parseInt(e.target.value)
+                            )
+                          }
+                          disabled={isLoading}
+                          className="w-full p-1 border border-gray-300 rounded-md"
+                        >
+                          <option value={0}>0</option>
+                          <option value={1}>1</option>
+                          <option value={2}>2</option>
+                          <option value={3}>3</option>
+                        </select>
+                      </td>
+                    ))}
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
+    actionLabel = "Create Subject";
+    secondaryActionLabel = "Back";
   }
-  if (step === STEPS.IMAGE1) {
-    bodyContent = (
-      <div className="flex flex-col gap-8">
-        <Heading title="Add Image 1" subtitle="Upload Image 1" />
-        <ImageUpload
-          value={imageSrc1}
-          onChange={(value) => setCustomValue("imageSrc1", value)}
-        />
-      </div>
-    );
-  }
-  if (step === STEPS.IMAGE2) {
-    bodyContent = (
-      <div className="flex flex-col gap-8">
-        <Heading title="Add Image 2" subtitle="Upload Image 2" />
-        <ImageUpload
-          value={imageSrc2}
-          onChange={(value) => setCustomValue("imageSrc2", value)}
-        />
-      </div>
-    );
-  }
-  if (step === STEPS.AVAILIBILITYANDCALORIES) {
-    bodyContent = (
-      <div className="flex flex-col gap-8">
-        <Heading
-          title="Add Availability and Calories"
-          subtitle="Enter Availability and Calories"
-        />
-        <Input
-          id="availability"
-          label="Availability"
-          register={register}
-          errors={errors}
-          required
-        />
-        <Input
-          id="calories"
-          label="Calories"
-          register={register}
-          errors={errors}
-          required
-        />
-      </div>
-    );
-  }
-  if (step === STEPS.COUNTER) {
-    bodyContent = (
-      <div className="flex flex-col gap-8">
-        <Heading
-          title="Add Counter and Price"
-          subtitle="Enter Counter and Price"
-        />
-        <Input
-          id="counter"
-          label="Counter"
-          register={register}
-          errors={errors}
-          type="number"
-          required
-        />
-        <Input
-          id="price"
-          label="Price"
-          type="number"
-          register={register}
-          errors={errors}
-          required
-          formatPrice
-        />
-      </div>
-    );
-  }
-  if (step === STEPS.SUBDES) {
-    bodyContent = (
-      <div className="flex flex-col gap-8">
-        <Heading title="Add Sub Des" subtitle="Enter Sub Des" />
-        <Input
-          id="SubDes"
-          label="Sub Des"
-          register={register}
-          errors={errors}
-          required
-        />
-      </div>
-    );
-  }
-  const footerContent = <div></div>;
-  let actionLabel = useMemo(() => {
-    if (step === STEPS.SUBDES) {
-      return "UPLOAD TO DATABASE";
-    }
-    return "Next";
-  }, [step]);
-  const secondaryActionLabel = useMemo(() => {
-    if (step === STEPS.CATEGORY) {
-      return undefined;
-    }
-    return "Previous Config";
-  }, [step]);
+
   return (
     <Modal
       disabled={isLoading}
-      isOpen={AddModal.isOpen}
-      title="Add New Item"
+      isOpen={subjectModal.isOpen}
+      title="Subject Management"
       actionLabel={actionLabel}
-      onClose={AddModal.onClose}
-      secondaryAction={step === STEPS.CATEGORY ? undefined : onBack}
+      onClose={subjectModal.onClose}
+      secondaryAction={step === STEPS.SUBJECT_DETAILS ? undefined : onBack}
       secondaryActionLabel={secondaryActionLabel}
       onSubmit={handleSubmit(onSubmit)}
       body={bodyContent}
-      footer={footerContent}
     />
   );
 };
 
-export default AddModal;
+export default AddSubjectModal;

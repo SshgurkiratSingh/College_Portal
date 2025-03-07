@@ -18,6 +18,7 @@ import { PiMoneyBold } from "react-icons/pi";
 import useAddModal from "@/app/hooks/useAddModal";
 import { useRouter } from "next/navigation";
 import { BiHome, BiBox } from "react-icons/bi";
+import useSubjectModal, { SubjectModalMode } from "@/app/hooks/useSubjectModal";
 interface UserMenuProps {
   currentUser?: SafeUser | null;
 }
@@ -28,6 +29,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   const loginModal = useLoginModal();
   const studentListModal = useStudentListModal();
   const router = useRouter();
+  const AddSubjectModal = useSubjectModal();
   const addModal = useAddModal();
   const toggleOpen = () => setIsOpen(!isOpen);
   if (currentUser?.email === "guri2022@hotmail.com") {
@@ -81,7 +83,6 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   }
   return (
     <div className="flex flex-row ml-2">
-     
       <div className="dropdown dropdown-end">
         <button
           onClick={toggleOpen}
@@ -125,7 +126,13 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                   }}
                   icon={<BiBox />}
                 />
-
+                <MenuItem
+                  label="Add Subject"
+                  onClick={() => {
+                    AddSubjectModal.onOpen(SubjectModalMode.CREATE);
+                  }}
+                  icon={<MdOutlineFavoriteBorder />}
+                />
                 <MenuItem
                   label="Logout"
                   onClick={signOut}

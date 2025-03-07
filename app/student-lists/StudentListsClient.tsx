@@ -20,8 +20,6 @@ interface Student {
   rollNo: string;
   name: string;
   email?: string | null;
-  section?: string | null;
-  batch?: string | null;
 }
 
 interface StudentList {
@@ -121,7 +119,9 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
           title="Your Student Lists"
           subtitle="Manage and view your student lists"
         />
-        <Button label="Create New List" onClick={handleCreateList} small />
+        <div >
+          <Button label="Create New List" onClick={handleCreateList} s2 />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

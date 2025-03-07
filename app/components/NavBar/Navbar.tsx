@@ -7,10 +7,12 @@ import UserMenu from "./UserMEnu";
 import { SafeUser } from "@/app/types";
 import { useRouter } from "next/navigation";
 import Collapse from "../Collapse";
-import { BiBox, BiNotification } from "react-icons/bi";
+import { BiBox, BiNotification, BiRefresh } from "react-icons/bi";
 import { IoAlert } from "react-icons/io5";
 import useNotificationModal from "@/app/hooks/useNotificationModal";
 import StudentListModal from "../modals/StudentListModal";
+import AddSubjectModal from "../modals/AddSubjectModal";
+import useSubjectModal from "@/app/hooks/useSubjectModal";
 interface NavBarProps {
   currentUser?: SafeUser | null;
   totalAlerts?: number;
@@ -26,6 +28,7 @@ interface NavBarProps {
 const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
   const router = useRouter();
   const notifcationModal = useNotificationModal();
+  
   const handleClick = () => {
     notifcationModal.onOpen();
   };
@@ -43,14 +46,23 @@ const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
             <div className="flex-grow"></div>
 
             <div className="flex-grow flex justify-center gap-4">
-              {/* Student Lists button moved to UserMenu */}
+            
             </div>
-            <div></div>
+            <div>
+              <button 
+                onClick={() => window.location.reload()}
+                className="btn btn-ghost btn-circle"
+                title="Refresh Page"
+              >
+                <BiRefresh size={24} />
+              </button>
+            </div>
             <UserMenu currentUser={currentUser} />
           </div>
         </div>
       </Container>
       <StudentListModal />
+      <AddSubjectModal />
     </>
   );
 };

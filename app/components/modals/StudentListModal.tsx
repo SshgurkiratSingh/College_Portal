@@ -25,8 +25,6 @@ interface Student {
   rollNo: string;
   name: string;
   email?: string;
-  section?: string;
-  batch?: string;
 }
 
 interface StudentList {
@@ -66,8 +64,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
       studentRollNo: "",
       studentName: "",
       studentEmail: "",
-      studentSection: "",
-      studentBatch: "",
     },
   });
 
@@ -196,8 +192,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
     setValue("studentRollNo", student.rollNo);
     setValue("studentName", student.name);
     setValue("studentEmail", student.email || "");
-    setValue("studentSection", student.section || "");
-    setValue("studentBatch", student.batch || "");
   };
 
   const saveStudentChanges = async () => {
@@ -208,8 +202,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
       rollNo: watch("studentRollNo"),
       name: watch("studentName"),
       email: watch("studentEmail"),
-      section: watch("studentSection"),
-      batch: watch("studentBatch"),
     };
 
     setIsLoading(true);
@@ -463,20 +455,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
               register={register}
               errors={errors}
             />
-            <Input
-              id="studentSection"
-              label="Section"
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-            />
-            <Input
-              id="studentBatch"
-              label="Batch"
-              disabled={isLoading}
-              register={register}
-              errors={errors}
-            />
           </div>
         </div>
       );
@@ -522,18 +500,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
                   >
                     Email
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Section
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Batch
-                  </th>
                   {studentListModal.mode === StudentListModalMode.EDIT && (
                     <th
                       scope="col"
@@ -548,7 +514,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
                 {students.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={4}
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
                       No students found in this list
@@ -576,12 +542,6 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {student.email || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.section || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {student.batch || "-"}
                       </td>
                       {studentListModal.mode === StudentListModalMode.EDIT && (
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -635,3 +595,4 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
 };
 
 export default StudentListModal;
+
