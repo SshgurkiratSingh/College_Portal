@@ -8,13 +8,15 @@ import Button from "./NavBar/Button";
 interface EmptyStateProps {
   title?: string;
   subtitle?: string;
-  showReset?: boolean;
+  onAction?: () => void;
+  actionLabelText?: string;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
   title = "Nothing Found",
   subtitle = "Retry or remove Some filters to get started.",
-  showReset,
+  onAction,
+  actionLabelText
 }) => {
   const router = useRouter();
 
@@ -32,11 +34,11 @@ const EmptyState: React.FC<EmptyStateProps> = ({
     >
       <Heading center title={title} subtitle={subtitle} />
       <div className="w-48 mt-4">
-        {showReset && (
+        {onAction && actionLabelText && (
           <Button
             outline
-            label="Remove all filters"
-            onClick={() => router.push("/")}
+            label={actionLabelText}
+            onClick={onAction}
           />
         )}
       </div>

@@ -4,6 +4,7 @@ import { SafeUser } from "@/app/types";
 import MenuItem from "./MenuItem";
 import useLoginModal from "@/app/hooks/useLoginModal";
 import useRegisterModal from "@/app/hooks/useRegisterModal";
+import useStudentListModal from "@/app/hooks/useStudentListModal";
 import Avatar from "../Avatar";
 import { TiUser } from "react-icons/ti";
 import { AiOutlineLogout } from "react-icons/ai";
@@ -16,7 +17,7 @@ import { BsPlus } from "react-icons/bs";
 import { PiMoneyBold } from "react-icons/pi";
 import useAddModal from "@/app/hooks/useAddModal";
 import { useRouter } from "next/navigation";
-import { BiHome } from "react-icons/bi";
+import { BiHome, BiBox } from "react-icons/bi";
 interface UserMenuProps {
   currentUser?: SafeUser | null;
 }
@@ -25,6 +26,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   const [isOpen, setIsOpen] = useState(false);
   const registerModal = useRegisterModal();
   const loginModal = useLoginModal();
+  const studentListModal = useStudentListModal();
   const router = useRouter();
   const addModal = useAddModal();
   const toggleOpen = () => setIsOpen(!isOpen);
@@ -79,8 +81,8 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   }
   return (
     <div className="flex flex-row ml-2">
+     
       <div className="dropdown dropdown-end">
-      
         <button
           onClick={toggleOpen}
           className="btn btn-ghost btn-circle avatar"
@@ -115,7 +117,15 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                   }}
                   icon={<TiUser />}
                 />
-              
+
+                <MenuItem
+                  label="Student Lists"
+                  onClick={() => {
+                    router.push("/student-lists");
+                  }}
+                  icon={<BiBox />}
+                />
+
                 <MenuItem
                   label="Logout"
                   onClick={signOut}

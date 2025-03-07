@@ -89,8 +89,6 @@ model Subject {
   // Projects for this subject
   projects Project[]
 
-  // Student list uploads (if needed)
-  studentListUploads StudentListUpload[]
 }
 
 model CO {
@@ -126,69 +124,73 @@ model COMapping {
 //----------------------------------------------
 model Project {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
+  name        String
   description String?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Link to the subject (thus, its COs and mappings are available)
+  // Link to Subject
   subject   Subject @relation(fields: [subjectId], references: [id])
   subjectId String  @db.ObjectId
 
-  // Teacher who created the project
-  createdBy   User   @relation("UserProjects", fields: [createdById], references: [id])
-  createdById String @db.ObjectId
+  // Link to User (Teacher)
+  user   User   @relation("UserProjects", fields: [userId], references: [id])
+  userId String @db.ObjectId
 
-  // Project questions (each mapped to one of the subject's CO)
+  // Questions in this project
   questions ProjectQuestion[]
 }
 
 model ProjectQuestion {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  project      Project @relation(fields: [projectId], references: [id])
-  projectId    String  @db.ObjectId
-  questionText String
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  project     Project @relation(fields: [projectId], references: [id])
+  projectId   String  @db.ObjectId
+  questionNum Int // Question number (1, 2, 3...)
+  maxMarks    Int // Maximum marks for this question
+  description String? // Optional question description
 
-  // The question is mapped to a subject CO (and through COMapping, to fixed outcomes)
-  co   CO     @relation(fields: [coId], references: [id])
-  coId String @db.ObjectId
+  // Link to a CO
+  co   CO?     @relation(fields: [coId], references: [id])
+  coId String? @db.ObjectId
 }
-
-//----------------------------------------------
-// Student List (associated with a Teacher) storing students as JSON
-//----------------------------------------------
 model StudentList {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  batchYear Int
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // Name of the student list (e.g. "CSE 2023 Batch")
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Associated teacher (a student list belongs to a single teacher)
-  teacher   User   @relation(fields: [teacherId], references: [id])
-  teacherId String @db.ObjectId
+  // Link to User (Teacher)
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
 
-  // List of students stored as JSON.
-  // Expected format:
-  // {
-  //   "students": [
-  //      { "name": "Student Name", "rollNumber": "Roll Number" },
-  //      ...
-  //   ]
-  // }
-  students Json
+  // Removed subject relation
+
+  // Students in this list
+  students Student[]
 }
 
-//----------------------------------------------
-// Optional: Student List File Uploads
-//----------------------------------------------
+model Student {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  rollNo  String  // Student roll number
+  name    String  // Student name
+  email   String? // Optional student email
+  section String? // Optional section
+  batch   String? // Optional batch
+
+  // Link to StudentList
+  studentList   StudentList @relation(fields: [studentListId], references: [id])
+  studentListId String      @db.ObjectId
+}
+
 model StudentListUpload {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  fileUrl      String // URL/path to the uploaded student list file
-  originalName String? // Optional original filename
-  uploadedAt   DateTime @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  filename  String   // Original filename
+  createdAt DateTime @default(now())
 
-  // Association with the subject for which the student list is uploaded
-  subject   Subject @relation(fields: [subjectId], references: [id])
-  subjectId String  @db.ObjectId
+  // Link to User (Teacher)
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
 
-  // Teacher who uploaded the student list
-  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
-  uploadedById String @db.ObjectId
+  // Removed subject relation
 }

@@ -12,8 +12,8 @@ import AddModal from "./components/modals/AddSubjectModal";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "DrinkDes",
-  description: "Vending MAchine Portal",
+  title: "CCET",
+  description: "CCET STUDENT PORTAL",
 };
 const font = Nunito({ subsets: ["latin"] });
 
