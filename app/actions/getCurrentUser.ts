@@ -23,8 +23,8 @@ export default async function getCurrentUser(){
             ...currentUser,
             createdAt:currentUser.createdAt.toISOString(),
             updatedAt:currentUser.updatedAt.toISOString() as string,
-            emailVerified:currentUser.emailVerified?.toISOString()||null,
             hashedPassword:"undefined"
+            
         };
     }catch (error:any){
         console.error(error);

@@ -154,7 +154,7 @@ model ProjectQuestion {
 }
 
 //----------------------------------------------
-// Student List (associated with a Teacher)
+// Student List (associated with a Teacher) storing students as JSON
 //----------------------------------------------
 model StudentList {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
@@ -164,17 +164,15 @@ model StudentList {
   teacher   User   @relation(fields: [teacherId], references: [id])
   teacherId String @db.ObjectId
 
-  // List of students in this batch
-  students StudentInList[]
-}
-
-model StudentInList {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  studentList   StudentList @relation(fields: [studentListId], references: [id])
-  studentListId String      @db.ObjectId
-
-  name       String
-  rollNumber String
+  // List of students stored as JSON.
+  // Expected format:
+  // {
+  //   "students": [
+  //      { "name": "Student Name", "rollNumber": "Roll Number" },
+  //      ...
+  //   ]
+  // }
+  students Json
 }
 
 //----------------------------------------------

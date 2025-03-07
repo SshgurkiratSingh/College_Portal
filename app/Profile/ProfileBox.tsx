@@ -6,8 +6,6 @@ import Collapse from "../components/Collapse";
 import useProfilePicModal from "../hooks/useProfilePicModal";
 import ProfilePicModal from "../components/modals/ProfilePicModal";
 import useUpdateBody from "../hooks/useBodyModal";
-import BodyUpdateModal from "../components/modals/UpdateBodyDetail";
-import BodyInfo from "./bodyInfo";
 import { MdAccountBalanceWallet } from "react-icons/md";
 import Image from "next/image";
 interface ProfileBoxProps {
@@ -21,7 +19,6 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
     <>
       <div className="flex justify-center items-center m-2">
         <ProfilePicModal />
-        <BodyUpdateModal currentUser={currentUser} />
         <div>
           <div className="flex  items-center flex-col bg-violet-600/10 rounded-lg w-auto h-auto min-h-16   p-2">
             <div
@@ -37,7 +34,6 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
                 {currentUser.email}
               </div>
               <div className="  font-semibold text-lg">
-                Balance: ₹{currentUser.balance}
               </div>
 
               <div className="avatar">
@@ -62,14 +58,7 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
                 />
               </div>
               <div className="flex flex-row items-center justify-center p-2 m-2">
-                {currentUser.DateOfBirth && (
-                  <BodyInfo
-                    weight={currentUser.weight || 0}
-                    height={currentUser.Height || 0}
-                    dob={currentUser.DateOfBirth}
-                    gender={currentUser.gender || "Not Set"}
-                  />
-                )}
+              
               </div>
             </div>
           </div>

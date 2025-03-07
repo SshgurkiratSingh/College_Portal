@@ -43,7 +43,7 @@ const RegisterModal = () => {
   };
   const bodyContent = (
     <div className="flex flex-col gap-4">
-      <Heading title="welcome to Site" subtitle="Create an account" center />
+      <Heading title="Welcome to CCET CurriculumSync " subtitle="Create an account" center />
       <Input
         id="email"
         label="Email"
@@ -75,7 +75,6 @@ const RegisterModal = () => {
   const footerContent = (
     <div className="flex flex-col gap-4 mt-3">
       <hr />
-      // Google and GitHub registration buttons removed
       <div
         className="
         text-red-100 

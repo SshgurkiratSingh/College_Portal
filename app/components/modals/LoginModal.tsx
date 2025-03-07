@@ -60,7 +60,7 @@ const LoginModal = () => {
 
   const bodyContent = (
     <div className="flex flex-col gap-4">
-      <Heading title="Welcome back" subtitle="Login to your account!" />
+      <Heading title="Welcome back to CurriculumSync" subtitle="Login to your account to access" />
       <Input
         id="email"
         label="Email"
@@ -84,7 +84,6 @@ const LoginModal = () => {
   const footerContent = (
     <div className="flex flex-col gap-4 mt-3">
       <hr />
-      // Google and GitHub login buttons removed
       <div
         className="
       text-red-100 text-center mt-4 font-light"

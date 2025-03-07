@@ -80,11 +80,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   return (
     <div className="flex flex-row ml-2">
       <div className="dropdown dropdown-end">
-        <div className="indicator">
-          <span className="indicator-item badge badge-secondary">
-            Rs. {currentUser?.balance}
-          </span>
-        </div>
+      
         <button
           onClick={toggleOpen}
           className="btn btn-ghost btn-circle avatar"
@@ -119,34 +115,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                   }}
                   icon={<TiUser />}
                 />
-                <MenuItem
-                  label="Purchase History"
-                  onClick={() => {
-                    router.push("/purchase-history");
-                  }}
-                  icon={<MdHistory />}
-                />
-                <MenuItem
-                  label="Favourite"
-                  onClick={() => {
-                    router.push("/favourite");
-                  }}
-                  icon={<MdOutlineFavoriteBorder />}
-                />
-                <MenuItem
-                  label="Fitness Record"
-                  onClick={() => {
-                    router.push("/Fitness-detail");
-                  }}
-                  icon={<IoFitnessSharp />}
-                />
-                <MenuItem
-                  label="Add Money"
-                  onClick={() => {
-                    router.push("/addMoney");
-                  }}
-                  icon={<PiMoneyBold />}
-                />
+              
                 <MenuItem
                   label="Logout"
                   onClick={signOut}

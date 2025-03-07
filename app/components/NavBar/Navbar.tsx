@@ -6,7 +6,6 @@ import Lgog from "./Logo";
 import UserMenu from "./UserMEnu";
 import { SafeUser } from "@/app/types";
 import { useRouter } from "next/navigation";
-import Categories from "../Categories/Categories";
 import Collapse from "../Collapse";
 import { BiBox, BiNotification } from "react-icons/bi";
 import { IoAlert } from "react-icons/io5";
@@ -36,23 +35,13 @@ const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
 
             <div className="flex-grow"></div>
             <div>
-              <div
-                className="w-10 h-10 rounded-full border-2 flex align-middle justify-center items-center hover:border-blue-600 transition"
-                onClick={handleClick}
-              >
-                <BiNotification />
-                <div className="absolute top-14   bg-red-600 rounded-full w-4 h-4 text-xs text-white flex justify-center items-center">
-                  1
-                </div>
-              </div>
+           
             </div>
-            <div className="w-8"></div>
             <UserMenu currentUser={currentUser} />
           </div>
         </div>
       </Container>
 
-      <Categories />
     </>
   );
 };

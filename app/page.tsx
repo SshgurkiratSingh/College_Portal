@@ -1,17 +1,11 @@
 import Image from "next/image";
 import ClientOnly from "./components/ClientOnly";
 import Container from "./components/container";
-import getItems, { ItemParams } from "@/app/actions/getItems";
-import ItemCard from "./components/ListingCard";
 import getCurrentUser from "./actions/getCurrentUser";
-import { categories } from "./components/Categories/Categories";
 import EmptyState from "./components/EmptyState";
-interface HomeProps {
-  searchParams: ItemParams;
-}
 
-export default async function Home({ searchParams }: HomeProps) {
-  const Items = await getItems(searchParams);
+
+export default async function Home() {
 
   const currentUser = await getCurrentUser();
   return (
@@ -25,17 +19,8 @@ export default async function Home({ searchParams }: HomeProps) {
 
           "
             >
-              {/* if item is empty then render empty component */}
-              {Items.length === 0 && <EmptyState showReset />}
-              {Items.map((item) => {
-                return (
-                  <ItemCard
-                    key={item.id}
-                    data={item}
-                    currentUser={currentUser}
-                  />
-                );
-              })}
+             
+             rsyfh
             </div>
           </div>
         </Container>
