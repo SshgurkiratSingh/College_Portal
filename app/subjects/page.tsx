@@ -203,7 +203,7 @@ const SubjectsPage = () => {
                 <h3 className="text-md font-medium">Course Outcomes:</h3>
                 <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                   {subject.courseOutcomes.map((co) => (
-                    <div key={co.id} className="bg-gray-50 p-3 rounded-md">
+                    <div key={co.id} className="bg-gray-800 p-3 rounded-md">
                       <span className="font-medium">{co.name}:</span> {co.description}
                     </div>
                   ))}

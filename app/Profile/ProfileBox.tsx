@@ -49,13 +49,7 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
                   s4
                   label="Update Profile Picture"
                 />
-                <Button
-                  onClick={() => {
-                    updateBodyModal.onOpen();
-                  }}
-                  s4
-                  label="Modify age, height, weight, and gender"
-                />
+              
               </div>
               <div className="flex flex-row items-center justify-center p-2 m-2">
               

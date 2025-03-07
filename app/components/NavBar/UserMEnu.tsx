@@ -127,9 +127,9 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                   icon={<BiBox />}
                 />
                 <MenuItem
-                  label="Add Subject"
+                  label="Subjects List"
                   onClick={() => {
-                    AddSubjectModal.onOpen(SubjectModalMode.CREATE);
+                    router.push("/subjects");
                   }}
                   icon={<MdOutlineFavoriteBorder />}
                 />
