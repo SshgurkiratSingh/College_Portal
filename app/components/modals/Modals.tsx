@@ -89,10 +89,11 @@ const Modal: React.FC<ModalProps> = ({
         <div
           className="
           relative 
+
           w-full
           md:w-4/6
           lg:w-3/6
-          xl:w-2/5
+          xl:w-5/6
           my-6
           mx-auto 
          
@@ -104,6 +105,7 @@ const Modal: React.FC<ModalProps> = ({
           {/*content*/}
           <div
             className={`
+              mt-5
             translate
             border-2
             border-violet-900

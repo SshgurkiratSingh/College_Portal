@@ -290,5 +290,297 @@
       }
     ],
     "credits": 3
+  },
+  {
+    "id": "77a7b59b-59fd-4b63-bd11-0fe0a19307aa",
+    "name": "PRP",
+    "code": "EC407",
+    "studentListId": "67cb2fc5d6590508c882d591",
+    "description": "",
+    "courseOutcomes": [
+      {
+        "name": "CO1",
+        "description": "Understand and review the concepts of signals,\nsystems, communication process, filters and\ntransforms in the communication system.",
+        "id": "temp-bik6cz02x"
+      },
+      {
+        "name": "CO2",
+        "description": "Apply the knowledge of probability theory and\nconcepts of random-process to characterize the\nrandom signals.",
+        "id": "temp-rmn3p4awr"
+      },
+      {
+        "name": "CO3",
+        "description": "Analyze the types of and characteristics of noise\nin stochastic system models and evaluate the\nperformance in terms of SNR.",
+        "id": "temp-h3acyulkn"
+      },
+      {
+        "name": "CO4",
+        "description": "Analyze the performance of communication\nsystems using the concept of Information Theory\nand coding techniques.",
+        "id": "temp-r8915ocyk"
+      }
+    ],
+    "mappings": [
+      {
+        "coId": "temp-bik6cz02x",
+        "mappings": [
+          {
+            "outcomeId": "PO1",
+            "value": 1
+          },
+          {
+            "outcomeId": "PO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO3",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO4",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO5",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO6",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO7",
+            "value": 2
+          },
+          {
+            "outcomeId": "PO8",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO9",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO10",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO11",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO12",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO3",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "coId": "temp-rmn3p4awr",
+        "mappings": [
+          {
+            "outcomeId": "PO1",
+            "value": 3
+          },
+          {
+            "outcomeId": "PO2",
+            "value": 3
+          },
+          {
+            "outcomeId": "PO3",
+            "value": 1
+          },
+          {
+            "outcomeId": "PO4",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO5",
+            "value": 1
+          },
+          {
+            "outcomeId": "PO6",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO7",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO8",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO9",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO10",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO11",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO12",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO3",
+            "value": 2
+          }
+        ]
+      },
+      {
+        "coId": "temp-h3acyulkn",
+        "mappings": [
+          {
+            "outcomeId": "PO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO3",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO4",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO5",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO6",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO7",
+            "value": 1
+          },
+          {
+            "outcomeId": "PO8",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO9",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO10",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO11",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO12",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO3",
+            "value": 1
+          }
+        ]
+      },
+      {
+        "coId": "temp-r8915ocyk",
+        "mappings": [
+          {
+            "outcomeId": "PO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO3",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO4",
+            "value": 2
+          },
+          {
+            "outcomeId": "PO5",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO6",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO7",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO8",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO9",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO10",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO11",
+            "value": 0
+          },
+          {
+            "outcomeId": "PO12",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO1",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO2",
+            "value": 0
+          },
+          {
+            "outcomeId": "PSO3",
+            "value": 0
+          }
+        ]
+      }
+    ],
+    "credits": 3
   }
 ]

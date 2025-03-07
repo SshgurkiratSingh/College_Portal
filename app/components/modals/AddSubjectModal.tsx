@@ -82,7 +82,7 @@ const AddSubjectModal = () => {
   const description = watch("description");
   const credits = watch("credits");
 
-  // Fetch student lists and program outcomes
+  // Fetch student lists and program outcomes, and subject data if in edit mode
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -94,7 +94,33 @@ const AddSubjectModal = () => {
         const outcomesResponse = await axios.get("/api/programOutcomes");
         setProgramOutcomes(outcomesResponse.data);
 
-        // Initialize mappings for the first CO
+        // If in edit or view mode, fetch the subject data
+        if ((subjectModal.mode === SubjectModalMode.EDIT || subjectModal.mode === SubjectModalMode.VIEW) && subjectModal.subjectId) {
+          const subjectResponse = await axios.get(`/api/subjects/${subjectModal.subjectId}`);
+          const subjectData = subjectResponse.data;
+          
+          // Set form values
+          setValue("name", subjectData.name);
+          setValue("code", subjectData.code);
+          setValue("studentListId", subjectData.studentListId);
+          setValue("description", subjectData.description || "");
+          setValue("credits", subjectData.credits || 3);
+          
+          // Set course outcomes
+          setCourseOutcomes(subjectData.courseOutcomes);
+          
+          // Set mappings
+          if (subjectData.mappings && subjectData.mappings.length > 0) {
+            setMappings(subjectData.mappings);
+          }
+        } else {
+          // Reset form for create mode
+          reset();
+          setCourseOutcomes([{ name: "CO1", description: "" }]);
+          setMappings([]);
+        }
+
+        // Initialize mappings
         if (courseOutcomes.length > 0) {
           initializeMappings();
         }
@@ -107,7 +133,7 @@ const AddSubjectModal = () => {
     if (subjectModal.isOpen) {
       fetchData();
     }
-  }, [subjectModal.isOpen]);
+  }, [subjectModal.isOpen, subjectModal.mode, subjectModal.subjectId, setValue, reset]);
 
   // Initialize mappings when course outcomes change
   useEffect(() => {
@@ -228,10 +254,20 @@ const AddSubjectModal = () => {
       mappings: mappings,
     };
 
-    axios
-      .post("/api/subjects", subjectData)
+    // Handle different modes (create, edit)
+    const isEditMode = subjectModal.mode === SubjectModalMode.EDIT;
+    const endpoint = isEditMode 
+      ? `/api/subjects/${subjectModal.subjectId}`
+      : "/api/subjects";
+    const method = isEditMode ? axios.patch : axios.post;
+    
+    method(endpoint, subjectData)
       .then(() => {
-        toast.success("Subject created successfully!");
+        toast.success(
+          isEditMode
+            ? "Subject updated successfully!"
+            : "Subject created successfully!"
+        );
         router.refresh();
         reset();
         setStep(STEPS.SUBJECT_DETAILS);
