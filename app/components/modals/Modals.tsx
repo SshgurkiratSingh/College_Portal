@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
-
 import Button from "../Button";
 
 interface ModalProps {
@@ -63,6 +62,23 @@ const Modal: React.FC<ModalProps> = ({
     secondaryAction();
   }, [secondaryAction, disabled]);
 
+  // Escape key handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, handleClose]);
+
   if (!isOpen) {
     return null;
   }
@@ -71,7 +87,7 @@ const Modal: React.FC<ModalProps> = ({
     <>
       <div
         className="
-        text-cyan-600
+          text-cyan-600
           justify-center 
           items-center 
           flex 
@@ -83,69 +99,65 @@ const Modal: React.FC<ModalProps> = ({
           outline-none 
           focus:outline-none
           bg-neutral-800/70
-         
         "
       >
         <div
           className="
-          relative 
-
-          w-full
-          md:w-4/6
-          lg:w-3/6
-          xl:w-5/6
-          my-6
-          mx-auto 
-         
-          h-full 
-          lg:h-auto
-          md:h-auto
+            relative 
+            w-full
+            md:w-4/6
+            lg:w-3/6
+            xl:w-5/6
+            my-6
+            mx-auto 
+            h-full 
+            lg:h-auto
+            md:h-auto
           "
         >
-          {/*content*/}
+          {/* Content */}
           <div
             className={`
               mt-5
-            translate
-            border-2
-            border-violet-900
-            rounded-lg
-            duration-300
-            h-full
-            ${showModal ? "translate-y-0" : "translate-y-full"}
-            ${showModal ? "opacity-100" : "opacity-0"}
-          `}
+              translate
+              border-2
+              border-violet-900
+              rounded-lg
+              duration-300
+              h-full
+              ${showModal ? "translate-y-0" : "translate-y-full"}
+              ${showModal ? "opacity-100" : "opacity-0"}
+            `}
           >
             <div
               className="
-              translate
-              h-full
-              lg:h-auto
-              md:h-auto
-              border-0 
-              rounded-lg 
-              shadow-lg 
-              relative 
-              flex 
-              flex-col 
-              w-full 
-            
-              outline-none 
-              focus:outline-none
-            "
+                translate
+                h-full
+                lg:h-auto
+                md:h-auto
+                border-0 
+                rounded-lg 
+                shadow-lg 
+                relative 
+                flex 
+                flex-col 
+                w-full 
+                outline-none 
+                focus:outline-none
+              "
               style={{ backdropFilter: "blur(22px)" }}
             >
-             
+              {/* Header */}
               <div
                 className="
-                flex 
-                items-center 
-                p-6
-                rounded-t
-                justify-center
-                relative
-                border-b-[1px]
-                border-violet-900
+                  flex 
+                  items-center 
+                  p-6
+                  rounded-t
+                  justify-center
+                  relative
+                  border-b-[1px]
+                  border-violet-900
                 "
               >
                 <button
@@ -165,9 +177,11 @@ const Modal: React.FC<ModalProps> = ({
                   {title}
                 </div>
               </div>
-              {/*body*/}
+
+              {/* Body */}
               <div className="relative p-6 flex-auto">{body}</div>
-              {/*footer*/}
+
+              {/* Footer */}
               <div className="flex flex-col gap-2 p-6">
                 <div
                   className="
