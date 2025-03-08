@@ -120,7 +120,7 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
           subtitle="Manage and view your student lists"
         />
         <div >
-          <Button label="Create New List" onClick={handleCreateList} s2 />
+          <Button label="Create New List" onClick={handleCreateList}  />
         </div>
       </div>
 

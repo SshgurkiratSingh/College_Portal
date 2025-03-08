@@ -67,7 +67,9 @@ const SubjectsPage = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [studentLists, setStudentLists] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [subjectProjects, setSubjectProjects] = useState<Record<string, Project[]>>({});
+  const [subjectProjects, setSubjectProjects] = useState<
+    Record<string, Project[]>
+  >({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,15 +89,19 @@ const SubjectsPage = () => {
         const projectsMap: Record<string, Project[]> = {};
         for (const subject of subjectsResponse.data) {
           try {
-            const projectsResponse = await axios.get(`/api/projects?subjectId=${subject.id}`);
+            const projectsResponse = await axios.get(
+              `/api/projects?subjectId=${subject.id}`
+            );
             projectsMap[subject.id] = projectsResponse.data;
           } catch (error) {
-            console.error(`Error fetching projects for subject ${subject.id}:`, error);
+            console.error(
+              `Error fetching projects for subject ${subject.id}:`,
+              error
+            );
             projectsMap[subject.id] = [];
           }
         }
         setSubjectProjects(projectsMap);
-
       } catch (error) {
         console.error("Error fetching subjects:", error);
         toast.error("Failed to load subjects");
@@ -139,7 +145,7 @@ const SubjectsPage = () => {
   const handleUploadPaper = (subjectId: string) => {
     uploadPaperModal.onOpen(subjectId);
   };
-  
+
   const handleCreateProject = (subjectId: string) => {
     projectModal.onOpen(subjectId);
   };
@@ -160,13 +166,13 @@ const SubjectsPage = () => {
       setIsLoading(true);
       await axios.delete(`/api/projects/${projectId}`);
       toast.success("Project deleted successfully");
-      
+
       // Update the local state to remove the deleted project
-      setSubjectProjects(prev => {
-        const newProjectsMap = {...prev};
+      setSubjectProjects((prev) => {
+        const newProjectsMap = { ...prev };
         for (const subjectId in newProjectsMap) {
           newProjectsMap[subjectId] = newProjectsMap[subjectId].filter(
-            project => project.id !== projectId
+            (project) => project.id !== projectId
           );
         }
         return newProjectsMap;
@@ -186,7 +192,7 @@ const SubjectsPage = () => {
   if (isLoading) {
     return (
       <Container>
-        <div className="pt-24">
+        <div className="pt-24 flex justify-center ">
           <Heading
             title="Loading..."
             subtitle="Please wait while we fetch the subjects"
@@ -302,7 +308,7 @@ const SubjectsPage = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Projects for this subject */}
                 <div className="mt-6">
                   <div className="flex justify-between items-center">
@@ -314,21 +320,36 @@ const SubjectsPage = () => {
                       Create Project
                     </button>
                   </div>
-                  {!subjectProjects[subject.id] || subjectProjects[subject.id].length === 0 ? (
-                    <p className="text-gray-500 mt-2">No projects found for this subject.</p>
+                  {!subjectProjects[subject.id] ||
+                  subjectProjects[subject.id].length === 0 ? (
+                    <p className="text-gray-500 mt-2">
+                      No projects found for this subject.
+                    </p>
                   ) : (
                     <div className="mt-2 space-y-3">
                       {subjectProjects[subject.id].map((project) => (
-                        <div key={project.id} className="border rounded-md p-3 hover:bg-gray-100 transition-colors">
+                        <div
+                          key={project.id}
+                          className="border rounded-md p-3 hover:bg-gray-100 transition-colors"
+                        >
                           <div className="flex justify-between items-start">
                             <div>
-                              <h4 className="font-medium text-gray-800">{project.name}</h4>
+                              <h4 className="font-medium text-gray-800">
+                                {project.name}
+                              </h4>
                               <div className="text-sm text-gray-500">
-                                <span className={`inline-block px-2 py-1 mr-2 rounded-full text-xs font-medium 
-                                  ${project.projectType === 'SESSIONAL' ? 'bg-blue-100 text-blue-800' : 
-                                    project.projectType === 'FINAL' ? 'bg-purple-100 text-purple-800' :
-                                    project.projectType === 'QUIZ' ? 'bg-green-100 text-green-800' : 
-                                    'bg-yellow-100 text-yellow-800'}`}>
+                                <span
+                                  className={`inline-block px-2 py-1 mr-2 rounded-full text-xs font-medium 
+                                  ${
+                                    project.projectType === "SESSIONAL"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : project.projectType === "FINAL"
+                                      ? "bg-purple-100 text-purple-800"
+                                      : project.projectType === "QUIZ"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}
+                                >
                                   {getProjectTypeLabel(project.projectType)}
                                 </span>
                                 <span>{project.totalMarks} marks</span>
@@ -336,7 +357,9 @@ const SubjectsPage = () => {
                               {project.description && (
                                 <p className="text-sm text-gray-600 mt-1">
                                   {project.description.substring(0, 100)}
-                                  {project.description.length > 100 ? '...' : ''}
+                                  {project.description.length > 100
+                                    ? "..."
+                                    : ""}
                                 </p>
                               )}
                             </div>
@@ -348,7 +371,9 @@ const SubjectsPage = () => {
                                 View
                               </button>
                               <button
-                                onClick={() => handleEditProject(project.id, subject.id)}
+                                onClick={() =>
+                                  handleEditProject(project.id, subject.id)
+                                }
                                 className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded-md text-xs transition"
                               >
                                 Edit

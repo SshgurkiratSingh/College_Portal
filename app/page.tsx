@@ -233,15 +233,10 @@ export default async function Home({ searchParams }: { searchParams: { auth: str
                         VHS students are found to be 96% autism positive.
                       </p>
                     </div>
-                    <div className="border-b border-gray-200 pb-3">
-                      <h3 className="font-medium text-gray-800">Gay Survey</h3>
-                      <p className="text-sm text-gray-600">
-                        Gay likes tattoos on their body .
-                      </p>
-                    </div>
+                  
                     <div>
                       <h3 className="font-medium text-gray-800">
-                        JAI is conirmed Autistic
+                        JAI is confirmed Autistic +1
                       </h3>
                       <p className="text-sm text-gray-600">
                         MCO23566 is found to be autistic{" "}
