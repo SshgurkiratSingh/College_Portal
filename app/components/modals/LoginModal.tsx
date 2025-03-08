@@ -107,19 +107,7 @@ const LoginModal = () => {
           />
         </div>
         
-        <div className="flex justify-between items-center text-sm">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="remember"
-              className="w-4 h-4 bg-[#1e3a5f] border-[#2d4a6a] rounded focus:ring-blue-500"
-            />
-            <label htmlFor="remember" className="ml-2 text-gray-300">Remember me</label>
-          </div>
-          <span className="text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">
-            Forgot password?
-          </span>
-        </div>
+    
       </div>
       
       <button
