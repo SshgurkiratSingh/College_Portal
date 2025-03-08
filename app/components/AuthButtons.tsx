@@ -1,27 +1,26 @@
-// components/AuthButtons.jsx
+// components/AuthButtons.tsx
 "use client"; // This marks it as a client component
 
 import React from "react";
+import useLoginModal from "@/app/hooks/useLoginModal";
+import useRegisterModal from "@/app/hooks/useRegisterModal";
+import Button from "@/app/components/NavBar/Button";
 
 const AuthButtons = () => {
+  const loginModal = useLoginModal();
+  const registerModal = useRegisterModal();
+
   return (
     <div className="flex justify-center space-x-4">
-      <button
-        onClick={() =>
-          document.dispatchEvent(new CustomEvent("open-login-modal"))
-        }
-        className="btn btn-primary px-6 py-2"
-      >
-        Sign In
-      </button>
-      <button
-        onClick={() =>
-          document.dispatchEvent(new CustomEvent("open-register-modal"))
-        }
-        className="btn btn-outline px-6 py-2"
-      >
-        Register
-      </button>
+      <Button 
+        label="Login" 
+        onClick={loginModal.onOpen}
+        outline
+      />
+      <Button 
+        label="Sign up" 
+        onClick={registerModal.onOpen}
+      />
     </div>
   );
 };

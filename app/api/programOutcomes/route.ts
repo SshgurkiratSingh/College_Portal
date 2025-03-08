@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/app/utils/requireAuth';
 
 export async function GET() {
+  // Check if user is authenticated
+  const authResult = await requireAuth();
+  if (!authResult.authenticated) {
+    return authResult.response;
+  }
   // Program Outcomes data
   const programOutcomes = {
     "PO1": "Graduates will demonstrate basic knowledge in Mathematics, Science, and Engineering and the ability to solve complex problems.",
