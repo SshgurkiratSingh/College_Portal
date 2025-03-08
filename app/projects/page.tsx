@@ -21,7 +21,7 @@ interface Project {
   subject?: {
     name: string;
     code?: string;
-  }
+  };
 }
 
 interface Subject {
@@ -41,7 +41,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     fetchSubjects();
     fetchProjects();
-    
+
     // Reset dataChanged flag after fetching
     if (projectModal.dataChanged) {
       projectModal.resetDataChanged();
@@ -50,7 +50,7 @@ const ProjectsPage = () => {
 
   const fetchSubjects = async () => {
     try {
-      const response = await axios.get('/api/subjects');
+      const response = await axios.get("/api/subjects");
       setSubjects(response.data);
     } catch (error) {
       console.error("Error fetching subjects:", error);
@@ -61,10 +61,10 @@ const ProjectsPage = () => {
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
-      const url = selectedSubject 
-        ? `/api/projects?subjectId=${selectedSubject}` 
-        : '/api/projects';
-      
+      const url = selectedSubject
+        ? `/api/projects?subjectId=${selectedSubject}`
+        : "/api/projects";
+
       const response = await axios.get(url);
       setProjects(response.data);
     } catch (error) {
@@ -82,7 +82,11 @@ const ProjectsPage = () => {
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this project? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -106,10 +110,10 @@ const ProjectsPage = () => {
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -117,19 +121,19 @@ const ProjectsPage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <Heading title="Projects" subtitle="Manage your projects" />
-        <Button 
-          label="Create Project" 
+        <Button
+          label="Create Project"
           onClick={() => {
             if (subjects.length > 0) {
               projectModal.onOpen(selectedSubject || subjects[0].id);
             } else {
               toast.error("Please create a subject first");
             }
-          }} 
+          }}
         />
       </div>
 
-      <div className="bg-white shadow-md rounded-md p-4 mb-6">
+      <div className="bg-black shadow-md rounded-md p-4 mb-6">
         <div className="flex items-center mb-4">
           <span className="mr-2 font-medium">Filter by Subject:</span>
           <select
@@ -184,23 +188,36 @@ const ProjectsPage = () => {
               {projects.map((project) => (
                 <tr key={project.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{project.name}</div>
+                    <div className="font-medium text-gray-900">
+                      {project.name}
+                    </div>
                     {project.description && (
-                      <div className="text-sm text-gray-500">{project.description.substring(0, 50)}...</div>
+                      <div className="text-sm text-gray-500">
+                        {project.description.substring(0, 50)}...
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {project.subject?.name || 'Unknown Subject'}
-                      {project.subject?.code ? ` (${project.subject.code})` : ''}
+                      {project.subject?.name || "Unknown Subject"}
+                      {project.subject?.code
+                        ? ` (${project.subject.code})`
+                        : ""}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${project.projectType === 'SESSIONAL' ? 'bg-blue-100 text-blue-800' : 
-                        project.projectType === 'FINAL' ? 'bg-purple-100 text-purple-800' :
-                        project.projectType === 'QUIZ' ? 'bg-green-100 text-green-800' : 
-                        'bg-yellow-100 text-yellow-800'}`}>
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                      ${
+                        project.projectType === "SESSIONAL"
+                          ? "bg-blue-100 text-blue-800"
+                          : project.projectType === "FINAL"
+                          ? "bg-purple-100 text-purple-800"
+                          : project.projectType === "QUIZ"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
                       {getProjectTypeLabel(project.projectType)}
                     </span>
                   </td>
@@ -218,7 +235,9 @@ const ProjectsPage = () => {
                       View
                     </button>
                     <button
-                      onClick={() => projectModal.onEdit(project.id, project.subjectId)}
+                      onClick={() =>
+                        projectModal.onEdit(project.id, project.subjectId)
+                      }
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Edit
