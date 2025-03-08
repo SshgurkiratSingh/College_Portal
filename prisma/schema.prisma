@@ -150,7 +150,7 @@ model Project {
 
 model ProjectQuestion {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  questionNum Int // e.g., 1, 2, 3, ...
+  questionNum String // e.g., 1, 2, 3, ...
   maxMarks    Int
   description String?
 

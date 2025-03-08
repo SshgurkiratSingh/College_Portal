@@ -9,8 +9,11 @@ import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
 import useUploadPaperModal from "../hooks/useUploadPaperModal";
+import useProjectModal from "../hooks/useProjectModal";
 import ClientOnly from "../components/ClientOnly";
 import UploadPaperModal from "../components/modals/UploadPaperModal";
+import ProjectModal from "../components/modals/ProjectModal";
+import { ProjectType } from "../hooks/useProjectModal";
 
 interface CourseOutcome {
   id?: string;
@@ -46,13 +49,25 @@ interface StudentList {
   name: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  projectType: ProjectType;
+  totalMarks: number;
+  subjectId: string;
+  createdAt: string;
+}
+
 const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
   const uploadPaperModal = useUploadPaperModal();
+  const projectModal = useProjectModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [studentLists, setStudentLists] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [subjectProjects, setSubjectProjects] = useState<Record<string, Project[]>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,6 +82,20 @@ const SubjectsPage = () => {
           studentListsMap[list.id] = list.name;
         });
         setStudentLists(studentListsMap);
+
+        // Now fetch projects for each subject
+        const projectsMap: Record<string, Project[]> = {};
+        for (const subject of subjectsResponse.data) {
+          try {
+            const projectsResponse = await axios.get(`/api/projects?subjectId=${subject.id}`);
+            projectsMap[subject.id] = projectsResponse.data;
+          } catch (error) {
+            console.error(`Error fetching projects for subject ${subject.id}:`, error);
+            projectsMap[subject.id] = [];
+          }
+        }
+        setSubjectProjects(projectsMap);
+
       } catch (error) {
         console.error("Error fetching subjects:", error);
         toast.error("Failed to load subjects");
@@ -109,6 +138,49 @@ const SubjectsPage = () => {
 
   const handleUploadPaper = (subjectId: string) => {
     uploadPaperModal.onOpen(subjectId);
+  };
+  
+  const handleCreateProject = (subjectId: string) => {
+    projectModal.onOpen(subjectId);
+  };
+
+  const handleViewProject = (projectId: string) => {
+    router.push(`/projects/${projectId}`);
+  };
+
+  const handleEditProject = (projectId: string, subjectId: string) => {
+    projectModal.onEdit(projectId, subjectId);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (!window.confirm("Are you sure you want to delete this project?")) {
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/projects/${projectId}`);
+      toast.success("Project deleted successfully");
+      
+      // Update the local state to remove the deleted project
+      setSubjectProjects(prev => {
+        const newProjectsMap = {...prev};
+        for (const subjectId in newProjectsMap) {
+          newProjectsMap[subjectId] = newProjectsMap[subjectId].filter(
+            project => project.id !== projectId
+          );
+        }
+        return newProjectsMap;
+      });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      toast.error("Failed to delete project");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getProjectTypeLabel = (type: ProjectType): string => {
+    return type.charAt(0) + type.slice(1).toLowerCase();
   };
 
   if (isLoading) {
@@ -192,6 +264,12 @@ const SubjectsPage = () => {
                       Upload Paper
                     </button>
                     <button
+                      onClick={() => handleCreateProject(subject.id)}
+                      className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
+                    >
+                      Create Project
+                    </button>
+                    <button
                       onClick={() => handleEdit(subject.id)}
                       className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md text-sm transition"
                     >
@@ -224,12 +302,77 @@ const SubjectsPage = () => {
                     ))}
                   </div>
                 </div>
+                
+                {/* Projects for this subject */}
+                <div className="mt-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-md font-medium">Projects:</h3>
+                    <button
+                      onClick={() => handleCreateProject(subject.id)}
+                      className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
+                    >
+                      Create Project
+                    </button>
+                  </div>
+                  {!subjectProjects[subject.id] || subjectProjects[subject.id].length === 0 ? (
+                    <p className="text-gray-500 mt-2">No projects found for this subject.</p>
+                  ) : (
+                    <div className="mt-2 space-y-3">
+                      {subjectProjects[subject.id].map((project) => (
+                        <div key={project.id} className="border rounded-md p-3 hover:bg-gray-100 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium text-gray-800">{project.name}</h4>
+                              <div className="text-sm text-gray-500">
+                                <span className={`inline-block px-2 py-1 mr-2 rounded-full text-xs font-medium 
+                                  ${project.projectType === 'SESSIONAL' ? 'bg-blue-100 text-blue-800' : 
+                                    project.projectType === 'FINAL' ? 'bg-purple-100 text-purple-800' :
+                                    project.projectType === 'QUIZ' ? 'bg-green-100 text-green-800' : 
+                                    'bg-yellow-100 text-yellow-800'}`}>
+                                  {getProjectTypeLabel(project.projectType)}
+                                </span>
+                                <span>{project.totalMarks} marks</span>
+                              </div>
+                              {project.description && (
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {project.description.substring(0, 100)}
+                                  {project.description.length > 100 ? '...' : ''}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleViewProject(project.id)}
+                                className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-1 rounded-md text-xs transition"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => handleEditProject(project.id, subject.id)}
+                                className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded-md text-xs transition"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProject(project.id)}
+                                className="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-md text-xs transition"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </Container>
       <UploadPaperModal />
+      <ProjectModal />
     </ClientOnly>
   );
 };
