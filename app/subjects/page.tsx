@@ -8,14 +8,13 @@ import Container from "../components/container";
 import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
+import useUploadPaperModal from "../hooks/useUploadPaperModal";
 import ClientOnly from "../components/ClientOnly";
+import UploadPaperModal from "../components/modals/UploadPaperModal";
 
-// Define interfaces for our data
 interface CourseOutcome {
-  // Depending on your implementation, an ID might not be stored.
-  // We'll use the 'code' as key if an ID is not present.
   id?: string;
-  code: string; // backend expects "code"
+  code: string;
   description: string;
 }
 
@@ -37,13 +36,11 @@ interface Subject {
   description?: string;
   courseOutcomes: CourseOutcome[];
   mappings: COMapping[];
-  // If using Prisma include for studentList
   studentList?: {
     name: string;
   };
 }
 
-// StudentList for separate fetch (if not included in subject)
 interface StudentList {
   id: string;
   name: string;
@@ -52,6 +49,7 @@ interface StudentList {
 const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
+  const uploadPaperModal = useUploadPaperModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [studentLists, setStudentLists] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -60,11 +58,9 @@ const SubjectsPage = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Fetch all subjects (assumes your API returns a list of subjects)
         const subjectsResponse = await axios.get("/api/subjects");
         setSubjects(subjectsResponse.data);
 
-        // Fetch student lists for mapping names if not included in subject
         const studentListsResponse = await axios.get("/api/student-lists");
         const studentListsMap: Record<string, string> = {};
         studentListsResponse.data.forEach((list: StudentList) => {
@@ -109,6 +105,10 @@ const SubjectsPage = () => {
 
   const handleAddNew = () => {
     subjectModal.onOpen(SubjectModalMode.CREATE);
+  };
+
+  const handleUploadPaper = (subjectId: string) => {
+    uploadPaperModal.onOpen(subjectId);
   };
 
   if (isLoading) {
@@ -186,6 +186,12 @@ const SubjectsPage = () => {
                       View
                     </button>
                     <button
+                      onClick={() => handleUploadPaper(subject.id)}
+                      className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-md text-sm transition"
+                    >
+                      Upload Paper
+                    </button>
+                    <button
                       onClick={() => handleEdit(subject.id)}
                       className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md text-sm transition"
                     >
@@ -223,6 +229,7 @@ const SubjectsPage = () => {
           </div>
         </div>
       </Container>
+      <UploadPaperModal />
     </ClientOnly>
   );
 };

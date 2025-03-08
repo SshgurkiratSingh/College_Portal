@@ -418,6 +418,7 @@ const AddSubjectModal = () => {
                   >
                     Remove
                   </button>
+                  
                 )}
               </div>
               <div className="flex flex-col gap-3">
