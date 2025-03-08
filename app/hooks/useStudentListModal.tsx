@@ -10,7 +10,7 @@ interface StudentListModalStore {
   isOpen: boolean;
   mode: StudentListModalMode;
   listId: string | null;
-  onOpen: (mode?: StudentListModalMode, listId?: string) => void;
+  onOpen: (mode?: StudentListModalMode, listId?: string | null) => void;
   onClose: () => void;
 }
 

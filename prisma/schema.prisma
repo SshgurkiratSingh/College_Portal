@@ -24,10 +24,11 @@ model User {
   accounts       Account[]
 
   // Teacher-created entities
-  subjects          Subject[]           @relation("UserSubjects")
-  projects          Project[]           @relation("UserProjects")
-  studentLists      StudentList[]
-  StudentListUpload StudentListUpload[]
+  subjects           Subject[]            @relation("UserSubjects")
+  projects           Project[]            @relation("UserProjects")
+  studentLists       StudentList[]
+  StudentListUpload  StudentListUpload[]
+  AttendanceInternal AttendanceInternal[] @relation("UserAttendance")
 }
 
 model Account {
@@ -73,14 +74,14 @@ enum OutcomeCode {
 // Subjects and Course Outcomes stored as JSON
 //----------------------------------------------
 model Subject {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  code          String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  createdBy     User         @relation("UserSubjects", fields: [createdById], references: [id])
-  createdById   String       @db.ObjectId
-  
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  code        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User     @relation("UserSubjects", fields: [createdById], references: [id])
+  createdById String   @db.ObjectId
+
   /// Instead of a separate CO model, we now store course outcomes as JSON.
   /// Example JSON structure for courseOutcomes:
   /// [
@@ -91,11 +92,12 @@ model Subject {
   ///   },
   ///   { ... }
   /// ]
-  courseOutcomes Json?
-  description    String?
-  projects      Project[]
-  studentList   StudentList? @relation("StudentListSubjects", fields: [studentListId], references: [id])
-  studentListId String?      @db.ObjectId
+  courseOutcomes     Json?
+  description        String?
+  projects           Project[]
+  studentList        StudentList?         @relation("StudentListSubjects", fields: [studentListId], references: [id])
+  studentListId      String?              @db.ObjectId
+  AttendanceInternal AttendanceInternal[]
 }
 
 model StudentList {
@@ -111,6 +113,17 @@ model StudentList {
 }
 
 //----------------------------------------------
+// Updated Project Model and Enum for Project Type
+//----------------------------------------------
+
+enum ProjectType {
+  SESSIONAL
+  FINAL
+  ASSIGNMENT
+  QUIZ
+}
+
+//----------------------------------------------
 // Projects and Project Questions
 //----------------------------------------------
 model Project {
@@ -120,7 +133,10 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Link to Subject
+  projectType ProjectType
+  totalMarks  Int // For SESSIONAL: max 30, FINAL: max 50, ASSIGNMENT/QUIZ: variable
+
+  // Link to Subject (each subject can have multiple projects)
   subject   Subject @relation(fields: [subjectId], references: [id])
   subjectId String  @db.ObjectId
 
@@ -128,26 +144,49 @@ model Project {
   user   User   @relation("UserProjects", fields: [userId], references: [id])
   userId String @db.ObjectId
 
-  // Questions in this project
+  // Project Questions, each linked to a specific course outcome (CO)
   questions ProjectQuestion[]
 }
 
 model ProjectQuestion {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  project     Project @relation(fields: [projectId], references: [id])
-  projectId   String  @db.ObjectId
-  questionNum Int     // Question number (1, 2, 3...)
-  maxMarks    Int     // Maximum marks for this question
-  description String? // Optional question description
+  questionNum Int // e.g., 1, 2, 3, ...
+  maxMarks    Int
+  description String?
 
-  /// Instead of linking to a CO, we store the CO code as a string.
-  coCode      String?
+  // Each question is linked to a specific project
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String  @db.ObjectId
+
+  /// Link to a Course Outcome code.
+  /// This CO code should correspond to one of the COs defined in the subject's courseOutcomes JSON.
+  coCode String
+}
+
+//----------------------------------------------
+// Attendance/Internal Assessments
+//----------------------------------------------
+model AttendanceInternal {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String // e.g., "Mid-Sem Attendance"
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  totalMarks  Int
+
+  // Link to Subject
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String  @db.ObjectId
+
+  // Link to User (Teacher)
+  user   User   @relation("UserAttendance", fields: [userId], references: [id])
+  userId String @db.ObjectId
 }
 
 model Student {
   id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  rollNo  String  // Student roll number
-  name    String  // Student name
+  rollNo  String // Student roll number
+  name    String // Student name
   email   String? // Optional student email
   section String? // Optional section
   batch   String? // Optional batch
@@ -159,7 +198,7 @@ model Student {
 
 model StudentListUpload {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  filename  String   // Original filename
+  filename  String // Original filename
   createdAt DateTime @default(now())
 
   // Link to User (Teacher)

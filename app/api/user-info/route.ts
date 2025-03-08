@@ -10,7 +10,21 @@ export async function GET() {
   }
 
   // Get user email from session
+  // Add null checks to ensure session and user properties exist
+  if (!authResult.session) {
+    return NextResponse.json({ error: 'User session not found' }, { status: 401 });
+  }
+
+  if (!authResult.session.user) {
+    return NextResponse.json({ error: 'User data not found in session' }, { status: 401 });
+  }
+
   const userEmail = authResult.session.user.email;
+  
+  // Check if email exists and is a string
+  if (!userEmail) {
+    return NextResponse.json({ error: 'User email not found in session' }, { status: 401 });
+  }
 
   try {
     // Fetch user data from database

@@ -152,7 +152,8 @@ export async function POST(request: Request) {
 }
 
 // Helper function to get a specific subject by id
-export const getSubject = async (id: string, userId?: string) => {
+// Removed 'export' keyword to fix "not a valid Route export field" error
+const getSubject = async (id: string, userId?: string) => {
   try {
     const subject = await prisma.subject.findFirst({
       where: { 
