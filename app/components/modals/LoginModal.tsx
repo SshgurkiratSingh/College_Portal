@@ -60,7 +60,6 @@ const LoginModal = () => {
   }, [loginModal, registerModal]);
 
   const bodyContent = (
-<<<<<<< HEAD
     <div className="flex flex-col gap-3 bg-gradient-to-b from-[#0a192f] to-[#112240] p-6 rounded-lg text-white shadow-xl">
       <div className="flex flex-col items-center mb-1">
         <div className="bg-blue-500 rounded-full p-2 mb-3">
@@ -108,22 +107,23 @@ const LoginModal = () => {
           />
         </div>
         
-    
+        <div className="flex justify-between items-center text-sm">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="remember"
+              className="w-4 h-4 bg-[#1e3a5f] border-[#2d4a6a] rounded focus:ring-blue-500"
+            />
+            <label htmlFor="remember" className="ml-2 text-gray-300">Remember me</label>
+          </div>
+          <span className="text-blue-400 hover:text-blue-300 cursor-pointer transition-colors">
+            Forgot password?
+          </span>
+        </div>
       </div>
       
       <button
         onClick={handleSubmit(onSubmit)}
-=======
-    <div className="flex flex-col gap-4">
-      <Heading
-        title="Welcome back to CurriculumSync"
-        subtitle="Login to your account to access"
-      />
-      <Input
-        id="email"
-        label="Email"
-        type="email"
->>>>>>> a4d1d3d36f9946dc8efa9e369cb606b37b8a7de0
         disabled={isLoading}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium mt-1 transition-colors focus:ring-4 focus:ring-blue-500/50 disabled:opacity-70 disabled:cursor-not-allowed"
       >
