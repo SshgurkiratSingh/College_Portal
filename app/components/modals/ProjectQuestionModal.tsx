@@ -26,7 +26,7 @@ const ProjectQuestionModal = () => {
     {
       id: Date.now().toString(),
       questionNum: "",
-      maxMarks: 0,
+      maxMarks: 1,
       description: "",
       coCode: "",
     },
@@ -231,15 +231,43 @@ const ProjectQuestionModal = () => {
     ]);
   };
 
+  // Generate the next question number based on pattern detection
+  const generateNextQuestionNumber = (prevQuestionNum: string): string => {
+    if (!prevQuestionNum) return "1";
+
+    // Check if the question number follows a pattern like "1a", "2b", etc.
+    const match = prevQuestionNum.match(/^(\d+)([a-z])$/i);
+
+    if (match) {
+      const [_, numPart, letterPart] = match;
+      // Get the next letter in sequence (a -> b, b -> c, etc.)
+      const nextLetter = String.fromCharCode(letterPart.charCodeAt(0) + 1);
+      return `${numPart}${nextLetter}`;
+    }
+
+    // If it's just a number, increment it
+    if (/^\d+$/.test(prevQuestionNum)) {
+      return (parseInt(prevQuestionNum) + 1).toString();
+    }
+
+    // If we can't determine a pattern, just return the same number
+    return prevQuestionNum;
+  };
+
   const addQuestion = () => {
+    const lastQuestion = questions[questions.length - 1];
+    const nextQuestionNum = generateNextQuestionNumber(
+      lastQuestion.questionNum
+    );
+
     setQuestions([
       ...questions,
       {
         id: Date.now().toString(),
-        questionNum: "",
-        maxMarks: 0,
+        questionNum: nextQuestionNum,
+        maxMarks: lastQuestion.maxMarks, // Copy the marks from the previous question
         description: "",
-        coCode: "",
+        coCode: lastQuestion.coCode, // Optionally copy the CO code as well
       },
     ]);
   };

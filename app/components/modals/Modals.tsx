@@ -198,14 +198,14 @@ const Modal: React.FC<ModalProps> = ({
                       label={secondaryActionLabel}
                       onClick={handleSecondaryAction}
                       outline
-                      s3
+                      
                     />
                   )}
                   <Button
                     disabled={disabled}
                     label={actionLabel}
                     onClick={handleSubmit}
-                    s3
+                    
                   />
                 </div>
                 {footer}
