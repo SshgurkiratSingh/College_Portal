@@ -5,9 +5,12 @@ import EmptyState from "./components/EmptyState";
 import Heading from "./components/Heading";
 import ButtonToPage from "./components/ButtonToPage";
 import AuthButtons from "./components/AuthButtons"; // Import the new client component
+import { redirect } from "next/navigation";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { auth: string } }) {
   const currentUser = await getCurrentUser();
+  // Check for auth param to show appropriate messages
+  const authRequired = searchParams.auth === "required";
 
   return (
     <div className="min-h-screen">
@@ -66,9 +69,17 @@ export default async function Home() {
                     </div>
                   ) : (
                     <div className="flex flex-col space-y-4">
-                      <p className="text-gray-600">
-                        Sign in to access your curriculum management dashboard!
-                      </p>
+                      {authRequired ? (
+                        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                          <p className="text-yellow-700">
+                            <strong>Authentication Required:</strong> You need to login to access that page.
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-gray-600">
+                          Sign in to access your curriculum management dashboard!
+                        </p>
+                      )}
                       <AuthButtons /> {/* Use the client component here */}
                     </div>
                   )}

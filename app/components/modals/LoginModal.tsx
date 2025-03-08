@@ -60,10 +60,14 @@ const LoginModal = () => {
 
   const bodyContent = (
     <div className="flex flex-col gap-4">
-      <Heading title="Welcome back to CurriculumSync" subtitle="Login to your account to access" />
+      <Heading
+        title="Welcome back to CurriculumSync"
+        subtitle="Login to your account to access"
+      />
       <Input
         id="email"
         label="Email"
+        type="email"
         disabled={isLoading}
         register={register}
         errors={errors}
