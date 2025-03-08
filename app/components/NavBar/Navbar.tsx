@@ -1,22 +1,19 @@
 "use client";
-import React, { use } from "react";
-import { Subject, User } from "@prisma/client";
+import React from "react";
 import Container from "../container";
 import Lgog from "./Logo";
 import UserMenu from "./UserMEnu";
 import { SafeUser } from "@/app/types";
 import { useRouter } from "next/navigation";
-import Collapse from "../Collapse";
-import { BiBox, BiNotification, BiRefresh } from "react-icons/bi";
-import { IoAlert } from "react-icons/io5";
-import useNotificationModal from "@/app/hooks/useNotificationModal";
+import { BiRefresh } from "react-icons/bi";
 import StudentListModal from "../modals/StudentListModal";
 import AddSubjectModal from "../modals/AddSubjectModal";
-import useSubjectModal from "@/app/hooks/useSubjectModal";
+
 interface NavBarProps {
   currentUser?: SafeUser | null;
   totalAlerts?: number;
 }
+
 /**
  * The navigation bar component. It will display the logo, the profile menu (if user is logged in) and the notification icon.
  *
@@ -27,18 +24,16 @@ interface NavBarProps {
  */
 const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
   const router = useRouter();
-  const notifcationModal = useNotificationModal();
-  
-  const handleClick = () => {
-    notifcationModal.onOpen();
-  };
+
+  // Get the first letter of the user's name
+  const userInitial = currentUser?.name?.charAt(0).toUpperCase() || "";
+
   return (
     <>
       <Container>
-        <div className="navbar bg-transparent w-full ">
-          {" "}
+        <div className="navbar bg-transparent w-full">
           <div className="flex-1">
-            <div className="btn btn-ghost normal-case ">
+            <div className="btn btn-ghost normal-case">
               <Lgog />
             </div>
           </div>
@@ -46,18 +41,24 @@ const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
             <div className="flex-grow"></div>
 
             <div className="flex-grow flex justify-center gap-4">
-            
+              {/* Additional buttons or links can go here */}
             </div>
-            <div>
-              <button 
+
+            <div className="flex items-center gap-4">
+              {/* Refresh Button */}
+              <button
                 onClick={() => window.location.reload()}
                 className="btn btn-ghost btn-circle"
                 title="Refresh Page"
               >
                 <BiRefresh size={24} />
               </button>
+
+             
+
+              {/* User Menu */}
+              <UserMenu currentUser={currentUser} />
             </div>
-            <UserMenu currentUser={currentUser} />
           </div>
         </div>
       </Container>

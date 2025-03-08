@@ -5,7 +5,6 @@ import MenuItem from "./MenuItem";
 import useLoginModal from "@/app/hooks/useLoginModal";
 import useRegisterModal from "@/app/hooks/useRegisterModal";
 import useStudentListModal from "@/app/hooks/useStudentListModal";
-import Avatar from "../Avatar";
 import { TiUser } from "react-icons/ti";
 import { AiOutlineLogout } from "react-icons/ai";
 import { MdOutlineFavoriteBorder, MdHistory } from "react-icons/md";
@@ -19,6 +18,7 @@ import useAddModal from "@/app/hooks/useAddModal";
 import { useRouter } from "next/navigation";
 import { BiHome, BiBox } from "react-icons/bi";
 import useSubjectModal, { SubjectModalMode } from "@/app/hooks/useSubjectModal";
+
 interface UserMenuProps {
   currentUser?: SafeUser | null;
 }
@@ -32,6 +32,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
   const AddSubjectModal = useSubjectModal();
   const addModal = useAddModal();
   const toggleOpen = () => setIsOpen(!isOpen);
+
+  // Get the first letter of the username
+  const userInitial = currentUser?.name?.charAt(0).toUpperCase() || "";
+
   if (currentUser?.email === "guri2022@hotmail.com") {
     return (
       <div className="dropdown dropdown-end">
@@ -39,11 +43,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
           onClick={toggleOpen}
           className="btn btn-ghost btn-circle avatar"
         >
-          <div className="w-10 rounded-full">
-            <Avatar
-              src={currentUser?.image}
-              alt={currentUser?.name || "User avatar"}
-            />
+          <div className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full">
+            <span className="text-lg font-semibold flex items-center justify-center w-full h-full">
+              {userInitial}
+            </span>
           </div>
         </button>
         {isOpen && (
@@ -81,6 +84,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
       </div>
     );
   }
+
   return (
     <div className="flex flex-row ml-2">
       <div className="dropdown dropdown-end">
@@ -88,12 +92,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
           onClick={toggleOpen}
           className="btn btn-ghost btn-circle avatar"
         >
-          {" "}
-          <div className="w-10 rounded-full">
-            <Avatar
-              src={currentUser?.image}
-              alt={currentUser?.name || "User avatar"}
-            />
+          <div className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full">
+            <span className="text-lg font-semibold flex items-center justify-center w-full h-full">
+              {userInitial}
+            </span>
           </div>
         </button>
         {isOpen && (
@@ -104,7 +106,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                 className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52"
               >
                 <li className="text-center text-red-300 text-xl">
-                  Hi,{currentUser.name}
+                  Hi, {currentUser.name}
                 </li>
                 <MenuItem
                   label="Home"
