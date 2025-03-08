@@ -430,7 +430,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
             title={`Edit Student: ${editingStudent.name}`}
             subtitle="Update student information"
           />
-
+      
           <div className="flex flex-col gap-4">
             <Input
               id="studentRollNo"
@@ -439,6 +439,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
               register={register}
               errors={errors}
               required
+             
             />
             <Input
               id="studentName"
@@ -447,6 +448,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
               register={register}
               errors={errors}
               required
+
             />
             <Input
               id="studentEmail"
@@ -454,6 +456,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
               disabled={isLoading}
               register={register}
               errors={errors}
+
             />
           </div>
         </div>

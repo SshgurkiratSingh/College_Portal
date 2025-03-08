@@ -59,7 +59,7 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
     studentListModal.onOpen(StudentListModalMode.CREATE);
   };
 
-  // Open modal to view a student list
+  // Open modal to view a student 
   const handleViewList = (listId: string) => {
     studentListModal.onOpen(StudentListModalMode.VIEW, listId);
   };
