@@ -1,49 +1,5 @@
 import { NextResponse } from "next/server";
-import path from 'path';
-import fs from 'fs';
-import { Subject } from '../route';
-
-// Path to subjects JSON file
-const dataFilePath = path.join(process.cwd(), 'data', 'subjects.json');
-
-// Helper to ensure data directory exists
-const ensureDataDirectoryExists = () => {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-};
-
-// Helper to read subjects
-const getSubjects = (): Subject[] => {
-  ensureDataDirectoryExists();
-  
-  try {
-    if (!fs.existsSync(dataFilePath)) {
-      // If file doesn't exist, create it with empty array
-      fs.writeFileSync(dataFilePath, JSON.stringify([]));
-      return [];
-    }
-    
-    const data = fs.readFileSync(dataFilePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading subjects data:', error);
-    return [];
-  }
-};
-
-// Helper to write subjects
-const saveSubjects = (subjects: Subject[]) => {
-  ensureDataDirectoryExists();
-  fs.writeFileSync(dataFilePath, JSON.stringify(subjects, null, 2));
-};
-
-// Helper to get a specific subject
-const getSubject = (id: string): Subject | undefined => {
-  const subjects = getSubjects();
-  return subjects.find(subject => subject.id === id);
-};
+import prisma from "@/app/libs/prismadb";
 
 // GET handler - Get a specific subject by ID
 export async function GET(
@@ -51,20 +7,37 @@ export async function GET(
   { params }: { params: { subjectId: string } }
 ) {
   try {
-    const subject = getSubject(params.subjectId);
-    
+    const subject = await prisma.subject.findUnique({
+      where: { id: params.subjectId },
+      include: {
+        // Include the student list (if any) selecting only the name
+        studentList: { select: { name: true } },
+      },
+    });
+
     if (!subject) {
       return NextResponse.json(
-        { error: 'Subject not found' },
+        { error: "Subject not found" },
         { status: 404 }
       );
     }
-    
-    return NextResponse.json(subject);
+
+    // Ensure courseOutcomes is returned as an array.
+    const courseOutcomes = Array.isArray(subject.courseOutcomes)
+      ? subject.courseOutcomes
+      : [];
+
+    // Return the subject with course outcomes and studentList.
+    const transformedSubject = {
+      ...subject,
+      courseOutcomes,
+    };
+
+    return NextResponse.json(transformedSubject);
   } catch (error) {
-    console.error('Error getting subject:', error);
+    console.error("Error getting subject:", error);
     return NextResponse.json(
-      { error: 'Failed to get subject' },
+      { error: "Failed to get subject" },
       { status: 500 }
     );
   }
@@ -77,56 +50,36 @@ export async function PATCH(
 ) {
   try {
     const body = await request.json();
-    const { 
-      name, 
-      code, 
-      studentListId,
-      description, 
-      courseOutcomes, 
-      mappings,
-      credits 
-    } = body;
-    
-    // Get subjects
-    const subjects = getSubjects();
-    
-    // Find subject index
-    const subjectIndex = subjects.findIndex(s => s.id === params.subjectId);
-    
-    // Check if subject exists
-    if (subjectIndex === -1) {
+    const { name, code, studentListId, description, courseOutcomes } = body;
+
+    if (!name) {
       return NextResponse.json(
-        { error: 'Subject not found' },
-        { status: 404 }
+        { error: "Subject name is required" },
+        { status: 400 }
       );
     }
-    
-    // Process course outcomes
-    const processedCourseOutcomes = (courseOutcomes || []).map((co: any) => ({
-      ...co,
-      id: co.id || subjects[subjectIndex].courseOutcomes.find(outcome => outcome.name === co.name)?.id || crypto.randomUUID()
-    }));
-    
-    // Update subject
-    subjects[subjectIndex] = {
-      ...subjects[subjectIndex],
-      ...(name !== undefined && { name }),
-      ...(code !== undefined && { code }),
-      ...(studentListId !== undefined && { studentListId }),
-      ...(description !== undefined && { description }),
-      ...(courseOutcomes !== undefined && { courseOutcomes: processedCourseOutcomes }),
-      ...(mappings !== undefined && { mappings }),
-      ...(credits !== undefined && { credits })
-    };
-    
-    // Save updated subjects
-    saveSubjects(subjects);
-    
-    return NextResponse.json(subjects[subjectIndex]);
+
+    // Update scalar fields and replace the courseOutcomes JSON field.
+    const updatedSubject = await prisma.subject.update({
+      where: { id: params.subjectId },
+      data: {
+        name,
+        code,
+        description,
+        studentListId: studentListId || null,
+        // Replace courseOutcomes with the new JSON array (or empty array if not provided)
+        courseOutcomes: courseOutcomes || [],
+      },
+      include: {
+        studentList: { select: { name: true } },
+      },
+    });
+
+    return NextResponse.json(updatedSubject);
   } catch (error) {
-    console.error('Error updating subject:', error);
+    console.error("Error updating subject:", error);
     return NextResponse.json(
-      { error: 'Failed to update subject' },
+      { error: "Failed to update subject" },
       { status: 500 }
     );
   }
@@ -138,31 +91,29 @@ export async function DELETE(
   { params }: { params: { subjectId: string } }
 ) {
   try {
-    // Get subjects
-    const subjects = getSubjects();
-    
-    // Find subject index
-    const subjectIndex = subjects.findIndex(s => s.id === params.subjectId);
-    
-    // Check if subject exists
-    if (subjectIndex === -1) {
+    const existingSubject = await prisma.subject.findUnique({
+      where: { id: params.subjectId },
+    });
+
+    if (!existingSubject) {
       return NextResponse.json(
-        { error: 'Subject not found' },
+        { error: "Subject not found" },
         { status: 404 }
       );
     }
-    
-    // Remove subject
-    subjects.splice(subjectIndex, 1);
-    
-    // Save updated subjects
-    saveSubjects(subjects);
-    
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting subject:', error);
+
+    await prisma.subject.delete({
+      where: { id: params.subjectId },
+    });
+
     return NextResponse.json(
-      { error: 'Failed to delete subject' },
+      { message: "Subject deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting subject:", error);
+    return NextResponse.json(
+      { error: "Failed to delete subject" },
       { status: 500 }
     );
   }

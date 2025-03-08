@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import axios from "axios";
@@ -33,7 +33,7 @@ interface StudentList {
 
 interface CourseOutcome {
   id?: string;
-  name: string;
+  name: string; // will be mapped to "code" when submitting
   description: string;
 }
 
@@ -53,11 +53,19 @@ const AddSubjectModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(STEPS.SUBJECT_DETAILS);
   const [studentLists, setStudentLists] = useState<StudentList[]>([]);
-  const [programOutcomes, setProgramOutcomes] = useState<Record<string, string>>({});
+  const [programOutcomes, setProgramOutcomes] = useState<
+    Record<string, string>
+  >({});
   const [courseOutcomes, setCourseOutcomes] = useState<CourseOutcome[]>([
-    { name: "CO1", description: "" }
+    { name: "CO1", description: "" },
   ]);
   const [mappings, setMappings] = useState<COMapping[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+
+  // Determine mode flags
+  const isViewMode = subjectModal.mode === SubjectModalMode.VIEW;
+  const isEditMode = subjectModal.mode === SubjectModalMode.EDIT;
+  const isCreateMode = subjectModal.mode === SubjectModalMode.CREATE;
 
   const {
     register,
@@ -72,7 +80,6 @@ const AddSubjectModal = () => {
       code: "",
       studentListId: "",
       description: "",
-      credits: 3,
     },
   });
 
@@ -80,90 +87,108 @@ const AddSubjectModal = () => {
   const code = watch("code");
   const studentListId = watch("studentListId");
   const description = watch("description");
-  const credits = watch("credits");
 
-  // Fetch student lists and program outcomes, and subject data if in edit mode
+  // Helper to initialize mappings (only in create mode)
+  const initializeMappings = () => {
+    if (!isCreateMode || mappings.length > 0) return;
+    if (Object.keys(programOutcomes).length === 0) return; // wait until outcomes are available
+    const initialMappings: COMapping[] = courseOutcomes.map((co, index) => ({
+      coId: co.id || `temp-${index}`,
+      mappings: Object.keys(programOutcomes).map((outcomeId) => ({
+        outcomeId,
+        value: 0,
+      })),
+    }));
+    setMappings(initialMappings);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch student lists
-        const listsResponse = await axios.get("/api/student-lists");
+        setIsFetching(true);
+        // Fetch student lists and program outcomes concurrently
+        const [listsResponse, outcomesResponse] = await Promise.all([
+          axios.get("/api/student-lists"),
+          axios.get("/api/programOutcomes"),
+        ]);
         setStudentLists(listsResponse.data);
+        const outcomesData: Record<string, string> = outcomesResponse.data;
+        setProgramOutcomes(outcomesData);
 
-        // Fetch program outcomes
-        const outcomesResponse = await axios.get("/api/programOutcomes");
-        setProgramOutcomes(outcomesResponse.data);
-
-        // If in edit or view mode, fetch the subject data
-        if ((subjectModal.mode === SubjectModalMode.EDIT || subjectModal.mode === SubjectModalMode.VIEW) && subjectModal.subjectId) {
-          const subjectResponse = await axios.get(`/api/subjects/${subjectModal.subjectId}`);
+        if (!isCreateMode && subjectModal.subjectId) {
+          // In Edit or View mode, fetch subject data.
+          const subjectResponse = await axios.get(
+            `/api/subjects/${subjectModal.subjectId}`
+          );
           const subjectData = subjectResponse.data;
-          
           // Set form values
           setValue("name", subjectData.name);
           setValue("code", subjectData.code);
           setValue("studentListId", subjectData.studentListId);
           setValue("description", subjectData.description || "");
-          setValue("credits", subjectData.credits || 3);
-          
-          // Set course outcomes
-          setCourseOutcomes(subjectData.courseOutcomes);
-          
-          // Set mappings
-          if (subjectData.mappings && subjectData.mappings.length > 0) {
-            setMappings(subjectData.mappings);
+
+          if (Array.isArray(subjectData.courseOutcomes)) {
+            // Map stored "code" to "name" for form display.
+            setCourseOutcomes(
+              subjectData.courseOutcomes.map((co: any) => ({
+                name: co.code,
+                description: co.description,
+              }))
+            );
+            // Build mappings using outcomesData.
+            setMappings(
+              subjectData.courseOutcomes.map((co: any, index: number) => ({
+                coId: co.id || `temp-${index}`,
+                mappings: Object.keys(outcomesData).map((outcomeId) => ({
+                  outcomeId,
+                  value:
+                    (co.mappings &&
+                      (
+                        co.mappings.find(
+                          (m: any) => m.outcomeId === outcomeId
+                        ) || { value: 0 }
+                      ).value) ||
+                    0,
+                })),
+              }))
+            );
           }
         } else {
-          // Reset form for create mode
+          // For Create mode, reset the form
           reset();
           setCourseOutcomes([{ name: "CO1", description: "" }]);
           setMappings([]);
         }
-
-        // Initialize mappings
-        if (courseOutcomes.length > 0) {
+        // Initialize mappings if needed (for create mode)
+        if (isCreateMode) {
           initializeMappings();
         }
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load required data");
+      } finally {
+        setIsFetching(false);
       }
     };
 
     if (subjectModal.isOpen) {
       fetchData();
     }
-  }, [subjectModal.isOpen, subjectModal.mode, subjectModal.subjectId, setValue, reset]);
+  }, [
+    subjectModal.isOpen,
+    subjectModal.mode,
+    subjectModal.subjectId,
+    setValue,
+    reset,
+    isCreateMode,
+  ]);
 
-  // Initialize mappings when course outcomes change
+  // Re-initialize mappings when course outcomes or program outcomes change (for create mode)
   useEffect(() => {
-    initializeMappings();
-  }, [courseOutcomes, programOutcomes]);
-
-  const initializeMappings = () => {
-    // Create an initial mapping structure for all COs
-    const initialMappings: COMapping[] = courseOutcomes.map((co) => {
-      // Check if a mapping already exists for this CO
-      const existingMapping = mappings.find(
-        (mapping) => mapping.coId === co.id
-      );
-
-      if (existingMapping) {
-        return existingMapping;
-      }
-
-      // Create a new mapping with all program outcomes set to 0
-      return {
-        coId: co.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
-        mappings: Object.keys(programOutcomes).map((outcomeId) => ({
-          outcomeId,
-          value: 0,
-        })),
-      };
-    });
-
-    setMappings(initialMappings);
-  };
+    if (isCreateMode) {
+      initializeMappings();
+    }
+  }, [courseOutcomes, programOutcomes, isCreateMode]);
 
   const setCustomValue = (id: string, value: any) => {
     setValue(id, value, {
@@ -185,10 +210,7 @@ const AddSubjectModal = () => {
     const newCONumber = courseOutcomes.length + 1;
     setCourseOutcomes([
       ...courseOutcomes,
-      {
-        name: `CO${newCONumber}`,
-        description: "",
-      },
+      { name: `CO${newCONumber}`, description: "" },
     ]);
   };
 
@@ -197,12 +219,10 @@ const AddSubjectModal = () => {
       toast.error("At least one Course Outcome is required");
       return;
     }
-
     const updatedCOs = [...courseOutcomes];
     updatedCOs.splice(index, 1);
     setCourseOutcomes(updatedCOs);
 
-    // Also update mappings
     const updatedMappings = [...mappings];
     updatedMappings.splice(index, 1);
     setMappings(updatedMappings);
@@ -218,49 +238,61 @@ const AddSubjectModal = () => {
     setCourseOutcomes(updatedCOs);
   };
 
+  // Updated updateMapping function with a guard in case mappings[coIndex] is undefined.
   const updateMapping = (coIndex: number, outcomeId: string, value: number) => {
-    const updatedMappings = [...mappings];
-    const mappingIndex = updatedMappings[coIndex].mappings.findIndex(
-      (m) => m.outcomeId === outcomeId
-    );
-
-    if (mappingIndex !== -1) {
-      updatedMappings[coIndex].mappings[mappingIndex].value = value;
-      setMappings(updatedMappings);
-    }
+    setMappings((prevMappings) => {
+      const newMappings = [...prevMappings];
+      // Initialize mapping for this course outcome if it doesn't exist.
+      if (!newMappings[coIndex]) {
+        newMappings[coIndex] = {
+          coId: courseOutcomes[coIndex]?.id || `temp-${coIndex}`,
+          mappings: Object.keys(programOutcomes).map((oid) => ({
+            outcomeId: oid,
+            value: 0,
+          })),
+        };
+      }
+      const mappingIndex = newMappings[coIndex].mappings.findIndex(
+        (m) => m.outcomeId === outcomeId
+      );
+      if (mappingIndex !== -1) {
+        newMappings[coIndex].mappings[mappingIndex].value = value;
+      }
+      return newMappings;
+    });
   };
 
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
-    if (step !== STEPS.OUTCOME_MAPPING) {
-      return onNext();
+    // In view mode, simply close the modal.
+    if (isViewMode) {
+      subjectModal.onClose();
+      return;
     }
+    if (step !== STEPS.OUTCOME_MAPPING) return onNext();
 
     setIsLoading(true);
 
-    // Prepare the final course outcomes with their IDs
+    // Prepare final course outcomes: map "name" to "code", include description and mappings.
     const finalCourseOutcomes = courseOutcomes.map((co, index) => ({
-      ...co,
-      id: mappings[index]?.coId || undefined,
+      code: co.name,
+      description: co.description,
+      mappings: mappings[index]?.mappings || [],
     }));
 
-    // Create the subject data to submit
     const subjectData = {
       name: data.name,
       code: data.code,
       studentListId: data.studentListId,
       description: data.description,
-      credits: parseInt(data.credits) || 3,
       courseOutcomes: finalCourseOutcomes,
-      mappings: mappings,
     };
 
-    // Handle different modes (create, edit)
     const isEditMode = subjectModal.mode === SubjectModalMode.EDIT;
-    const endpoint = isEditMode 
+    const endpoint = isEditMode
       ? `/api/subjects/${subjectModal.subjectId}`
       : "/api/subjects";
     const method = isEditMode ? axios.patch : axios.post;
-    
+
     method(endpoint, subjectData)
       .then(() => {
         toast.success(
@@ -283,47 +315,58 @@ const AddSubjectModal = () => {
       });
   };
 
-  let bodyContent;
-  let actionLabel = "Next";
-  let secondaryActionLabel;
+  // Set action labels based on mode and step.
+  let actionLabel: string;
+  let secondaryActionLabel: string | undefined;
 
-  // SUBJECT DETAILS STEP
+  if (isViewMode) {
+    actionLabel = "Close";
+    secondaryActionLabel = undefined;
+  } else if (step === STEPS.OUTCOME_MAPPING) {
+    actionLabel = isEditMode ? "Update Subject" : "Create Subject";
+    secondaryActionLabel = "Back";
+  } else {
+    actionLabel = "Next";
+    secondaryActionLabel = step === STEPS.SUBJECT_DETAILS ? undefined : "Back";
+  }
+
+  // In view mode, disable form inputs.
+  const inputDisabled = isLoading || isFetching || isViewMode;
+
+  let bodyContent;
   if (step === STEPS.SUBJECT_DETAILS) {
     bodyContent = (
       <div className="flex flex-col gap-4">
         <Heading
-          title="Create a Subject"
+          title={isViewMode ? "View Subject" : "Create a Subject"}
           subtitle="Enter the details of your subject"
         />
-
         <div className="flex flex-col gap-4">
           <Input
             id="name"
             label="Subject Name"
-            disabled={isLoading}
+            disabled={inputDisabled}
             register={register}
             errors={errors}
             required
             placeholderText="e.g., Digital Signal Processing"
           />
-
           <Input
             id="code"
             label="Subject Code"
-            disabled={isLoading}
+            disabled={inputDisabled}
             register={register}
             errors={errors}
             required
             placeholderText="e.g., EC301"
           />
-
           <div className="w-full">
             <label className="block text-sm font-medium mb-2">
               Student List
             </label>
             <select
               id="studentListId"
-              disabled={isLoading}
+              disabled={inputDisabled}
               {...register("studentListId", { required: true })}
               className={`
                 w-full p-2 border rounded-md
@@ -343,75 +386,54 @@ const AddSubjectModal = () => {
               </span>
             )}
           </div>
-
           <Input
             id="description"
             label="Description"
-            disabled={isLoading}
+            disabled={inputDisabled}
             register={register}
             errors={errors}
             placeholderText="Brief description of the subject"
           />
-
-          <Input
-            id="credits"
-            label="Credits"
-            type="number"
-            min={1}
-            max={10}
-            disabled={isLoading}
-            register={register}
-            errors={errors}
-            required
-          />
         </div>
       </div>
     );
-    actionLabel = "Next";
-    secondaryActionLabel = undefined;
-  }
-
-  // COURSE OUTCOMES STEP
-  else if (step === STEPS.COURSE_OUTCOMES) {
+  } else if (step === STEPS.COURSE_OUTCOMES) {
     bodyContent = (
       <div className="flex flex-col gap-4">
         <Heading
-          title="Course Outcomes"
+          title={isViewMode ? "View Course Outcomes" : "Course Outcomes"}
           subtitle="Define the Course Outcomes (COs) for this subject"
         />
-
         <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto px-1">
           {courseOutcomes.map((co, index) => (
             <div key={index} className="border p-4 rounded-md">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">Course Outcome {index + 1}</h3>
-                <button
-                  type="button"
-                  onClick={() => removeCourseOutcome(index)}
-                  className="text-red-500 hover:text-red-700"
-                  disabled={courseOutcomes.length <= 1 || isLoading}
-                >
-                  Remove
-                </button>
+                {!isViewMode && (
+                  <button
+                    type="button"
+                    onClick={() => removeCourseOutcome(index)}
+                    className="text-red-500 hover:text-red-700"
+                    disabled={courseOutcomes.length <= 1 || isLoading}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
-
               <div className="flex flex-col gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Name
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Name</label>
                   <input
                     type="text"
                     value={co.name}
                     onChange={(e) =>
                       updateCourseOutcome(index, "name", e.target.value)
                     }
-                    disabled={isLoading}
+                    disabled={inputDisabled}
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="e.g., CO1"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Description
@@ -421,7 +443,7 @@ const AddSubjectModal = () => {
                     onChange={(e) =>
                       updateCourseOutcome(index, "description", e.target.value)
                     }
-                    disabled={isLoading}
+                    disabled={inputDisabled}
                     className="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="Describe this course outcome"
                     rows={3}
@@ -430,31 +452,26 @@ const AddSubjectModal = () => {
               </div>
             </div>
           ))}
-
-          <button
-            type="button"
-            onClick={addCourseOutcome}
-            disabled={isLoading}
-            className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
-          >
-            Add Course Outcome
-          </button>
+          {!isViewMode && (
+            <button
+              type="button"
+              onClick={addCourseOutcome}
+              disabled={isLoading}
+              className="bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+            >
+              Add Course Outcome
+            </button>
+          )}
         </div>
       </div>
     );
-    actionLabel = "Next";
-    secondaryActionLabel = "Back";
-  }
-
-  // OUTCOME MAPPING STEP
-  else if (step === STEPS.OUTCOME_MAPPING) {
+  } else if (step === STEPS.OUTCOME_MAPPING) {
     bodyContent = (
       <div className="flex flex-col gap-4">
         <Heading
-          title="Outcome Mapping"
+          title={isViewMode ? "View Outcome Mapping" : "Outcome Mapping"}
           subtitle="Map each Course Outcome to Program Outcomes with a value from 0 to 3"
         />
-
         <div className="text-sm text-gray-500 mb-2">
           <p>Mapping values:</p>
           <p>0 - No correlation (default)</p>
@@ -462,7 +479,6 @@ const AddSubjectModal = () => {
           <p>2 - Medium correlation</p>
           <p>3 - High correlation</p>
         </div>
-
         <div className="overflow-x-auto">
           <table className="min-w-full border divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -509,7 +525,7 @@ const AddSubjectModal = () => {
                               parseInt(e.target.value)
                             )
                           }
-                          disabled={isLoading}
+                          disabled={inputDisabled}
                           className="w-full p-1 border border-gray-300 rounded-md"
                         >
                           <option value={0}>0</option>
@@ -527,9 +543,10 @@ const AddSubjectModal = () => {
         </div>
       </div>
     );
-    actionLabel = "Create Subject";
-    secondaryActionLabel = "Back";
   }
+
+  // Determine submit behavior: in view mode, just close; otherwise submit the form.
+  const onAction = isViewMode ? subjectModal.onClose : handleSubmit(onSubmit);
 
   return (
     <Modal
@@ -540,7 +557,7 @@ const AddSubjectModal = () => {
       onClose={subjectModal.onClose}
       secondaryAction={step === STEPS.SUBJECT_DETAILS ? undefined : onBack}
       secondaryActionLabel={secondaryActionLabel}
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={onAction}
       body={bodyContent}
     />
   );

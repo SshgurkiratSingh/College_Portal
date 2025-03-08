@@ -70,55 +70,44 @@ enum OutcomeCode {
 }
 
 //----------------------------------------------
-// Subjects and Course Outcomes (CO)
+// Subjects and Course Outcomes stored as JSON
 //----------------------------------------------
 model Subject {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  code      String? // Optional subject code
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // The teacher who created the subject
-  createdBy   User   @relation("UserSubjects", fields: [createdById], references: [id])
-  createdById String @db.ObjectId
-
-  // A subject can have many COs
-  cos CO[]
-
-  // Projects for this subject
-  projects    Project[]
-  studentList StudentList? @relation(fields: [studentListId], references: [id])
-
-  studentListId String? @db.ObjectId
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  code          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  createdBy     User         @relation("UserSubjects", fields: [createdById], references: [id])
+  createdById   String       @db.ObjectId
+  
+  /// Instead of a separate CO model, we now store course outcomes as JSON.
+  /// Example JSON structure for courseOutcomes:
+  /// [
+  ///   {
+  ///     "code": "CO1",
+  ///     "description": "Understanding signals",
+  ///     "mappings": { "PO1": 3, "PO2": 0, ..., "PSO3": 1 }
+  ///   },
+  ///   { ... }
+  /// ]
+  courseOutcomes Json?
+  description    String?
+  projects      Project[]
+  studentList   StudentList? @relation("StudentListSubjects", fields: [studentListId], references: [id])
+  studentListId String?      @db.ObjectId
 }
 
-model CO {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  subject     Subject @relation(fields: [subjectId], references: [id])
-  subjectId   String  @db.ObjectId
-  code        String // e.g., "CO1", "CO2", etc.
+model StudentList {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
   description String?
-
-  // Mapping of this CO to all fixed outcomes (POs and PSOs)
-  coMappings COMapping[]
-
-  // Questions (from project question papers) mapped to this CO
-  projectQuestions ProjectQuestion[]
-}
-
-model COMapping {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-
-  // Link to a subject CO
-  co   CO     @relation(fields: [coId], references: [id])
-  coId String @db.ObjectId
-
-  // Outcome code (static, fixed outcomes)
-  outcomeCode OutcomeCode
-
-  // Level assigned (0 to 3)
-  level Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String    @db.ObjectId
+  students    Student[]
+  subjects    Subject[] @relation("StudentListSubjects")
 }
 
 //----------------------------------------------
@@ -147,37 +136,18 @@ model ProjectQuestion {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   project     Project @relation(fields: [projectId], references: [id])
   projectId   String  @db.ObjectId
-  questionNum Int // Question number (1, 2, 3...)
-  maxMarks    Int // Maximum marks for this question
+  questionNum Int     // Question number (1, 2, 3...)
+  maxMarks    Int     // Maximum marks for this question
   description String? // Optional question description
 
-  // Link to a CO
-  co   CO?     @relation(fields: [coId], references: [id])
-  coId String? @db.ObjectId
-}
-
-model StudentList {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String // Name of the student list (e.g. "CSE 2023 Batch")
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Link to User (Teacher)
-  user   User   @relation(fields: [userId], references: [id])
-  userId String @db.ObjectId
-
-  // Removed subject relation
-
-  // Students in this list
-  students Student[]
-  Subject  Subject[]
+  /// Instead of linking to a CO, we store the CO code as a string.
+  coCode      String?
 }
 
 model Student {
   id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  rollNo  String // Student roll number
-  name    String // Student name
+  rollNo  String  // Student roll number
+  name    String  // Student name
   email   String? // Optional student email
   section String? // Optional section
   batch   String? // Optional batch
@@ -189,12 +159,10 @@ model Student {
 
 model StudentListUpload {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  filename  String // Original filename
+  filename  String   // Original filename
   createdAt DateTime @default(now())
 
   // Link to User (Teacher)
   user   User   @relation(fields: [userId], references: [id])
   userId String @db.ObjectId
-
-  // Removed subject relation
 }
