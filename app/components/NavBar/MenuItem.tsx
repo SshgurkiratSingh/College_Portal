@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 interface MenuItemProps {
   onClick: () => void;
   label: string;
-  icon?: ReactNode; // optional prop, can be any valid JSX/ReactNode
+  icon?: ReactNode; 
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({ onClick, label, icon }) => {
