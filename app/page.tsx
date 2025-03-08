@@ -1,10 +1,10 @@
-import Image from "next/image";
 import ClientOnly from "./components/ClientOnly";
 import Container from "./components/container";
 import getCurrentUser from "./actions/getCurrentUser";
 import EmptyState from "./components/EmptyState";
 import Heading from "./components/Heading";
 import ButtonToPage from "./components/ButtonToPage";
+import AuthButtons from "./components/AuthButtons"; // Import the new client component
 
 export default async function Home() {
   const currentUser = await getCurrentUser();
@@ -69,28 +69,7 @@ export default async function Home() {
                       <p className="text-gray-600">
                         Sign in to access your curriculum management dashboard!
                       </p>
-                      <div className="flex justify-center space-x-4">
-                        <button
-                          onClick={() =>
-                            document.dispatchEvent(
-                              new CustomEvent("open-login-modal")
-                            )
-                          }
-                          className="btn btn-primary px-6 py-2"
-                        >
-                          Sign In
-                        </button>
-                        <button
-                          onClick={() =>
-                            document.dispatchEvent(
-                              new CustomEvent("open-register-modal")
-                            )
-                          }
-                          className="btn btn-outline px-6 py-2"
-                        >
-                          Register
-                        </button>
-                      </div>
+                      <AuthButtons /> {/* Use the client component here */}
                     </div>
                   )}
                 </div>
