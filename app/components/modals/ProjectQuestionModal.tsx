@@ -210,6 +210,7 @@ const ProjectQuestionModal = () => {
       }
 
       resetForm();
+      projectQuestionModal.setDataChanged(); // Signal that data has changed
       projectQuestionModal.onClose();
     } catch (error) {
       console.error("Error saving questions:", error);

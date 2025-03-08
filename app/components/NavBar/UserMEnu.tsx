@@ -7,7 +7,7 @@ import useRegisterModal from "@/app/hooks/useRegisterModal";
 import useStudentListModal from "@/app/hooks/useStudentListModal";
 import { TiUser } from "react-icons/ti";
 import { AiOutlineLogout } from "react-icons/ai";
-import { MdOutlineFavoriteBorder, MdHistory } from "react-icons/md";
+import { MdOutlineFavoriteBorder } from "react-icons/md";
 import { IoIosLogIn } from "react-icons/io";
 import { GrUserNew } from "react-icons/gr";
 import { PiSignInLight } from "react-icons/pi";
@@ -35,55 +35,6 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
 
   // Get the first letter of the username
   const userInitial = currentUser?.name?.charAt(0).toUpperCase() || "";
-
-  if (currentUser?.email === "guri2022@hotmail.com") {
-    return (
-      <div className="dropdown dropdown-end">
-        <button
-          onClick={toggleOpen}
-          className="btn btn-ghost btn-circle avatar"
-        >
-          <div className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full">
-            <span className="text-lg font-semibold flex items-center justify-center w-full h-full">
-              {userInitial}
-            </span>
-          </div>
-        </button>
-        {isOpen && (
-          <>
-            {currentUser.email === "guri2022@hotmail.com" ? (
-              <ul
-                tabIndex={0}
-                className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52"
-              >
-                <li className="text-center text-primary text-xl">
-                  Welcome To Admin Portal
-                </li>
-                <MenuItem
-                  label="Add New"
-                  onClick={addModal.onOpen}
-                  icon={<BsPlus />}
-                />
-                <MenuItem
-                  label="Logout"
-                  onClick={() => {
-                    signOut({
-                      redirect: false,
-                      callbackUrl:
-                        '"https://main.d1emtjc4kvp6hm.amplifyapp.com/"',
-                    });
-                  }}
-                  icon={<AiOutlineLogout />}
-                />
-              </ul>
-            ) : (
-              <div>You need to be admin to see this</div>
-            )}
-          </>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-row ml-2">

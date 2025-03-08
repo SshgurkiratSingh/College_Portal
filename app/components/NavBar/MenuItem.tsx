@@ -14,9 +14,8 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, label, icon }) => {
       className="
         flex 
         items-center 
-        gap-2 
         px-4 
-        py-2 
+        py-1 
         cursor-pointer 
         hover:bg-gray-500 
         transition-colors

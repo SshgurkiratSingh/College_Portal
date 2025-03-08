@@ -126,6 +126,7 @@ const ProjectModal = () => {
       }
 
       resetForm();
+      projectModal.setDataChanged(); // Signal that data has changed
       projectModal.onClose();
     } catch (error) {
       console.error("Error saving project:", error);

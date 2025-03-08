@@ -10,6 +10,7 @@ import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
 import useUploadPaperModal from "../hooks/useUploadPaperModal";
 import useProjectModal from "../hooks/useProjectModal";
+import useStudentListModal from "../hooks/useStudentListModal";
 import ClientOnly from "../components/ClientOnly";
 import UploadPaperModal from "../components/modals/UploadPaperModal";
 import ProjectModal from "../components/modals/ProjectModal";
@@ -63,6 +64,7 @@ const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
   const uploadPaperModal = useUploadPaperModal();
+  const studentListModal = useStudentListModal();
   const projectModal = useProjectModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [studentLists, setStudentLists] = useState<Record<string, string>>({});
@@ -102,6 +104,17 @@ const SubjectsPage = () => {
           }
         }
         setSubjectProjects(projectsMap);
+
+        // Reset the dataChanged flags after fetching
+        if (subjectModal.dataChanged) {
+          subjectModal.resetDataChanged();
+        }
+        if (projectModal.dataChanged) {
+          projectModal.resetDataChanged();
+        }
+        if (studentListModal.dataChanged) {
+          studentListModal.resetDataChanged();
+        }
       } catch (error) {
         console.error("Error fetching subjects:", error);
         toast.error("Failed to load subjects");
@@ -111,7 +124,13 @@ const SubjectsPage = () => {
     };
 
     fetchData();
-  }, []);
+
+    // Also refetch data when any dataChanged flag is true
+  }, [
+    subjectModal.dataChanged,
+    projectModal.dataChanged,
+    studentListModal.dataChanged,
+  ]);
 
   const handleDelete = async (subjectId: string) => {
     if (!window.confirm("Are you sure you want to delete this subject?")) {
@@ -123,6 +142,7 @@ const SubjectsPage = () => {
       setSubjects((current) =>
         current.filter((subject) => subject.id !== subjectId)
       );
+      subjectModal.setDataChanged(); // Signal that data has changed
       router.refresh();
     } catch (error) {
       console.error("Error deleting subject:", error);
@@ -177,6 +197,8 @@ const SubjectsPage = () => {
         }
         return newProjectsMap;
       });
+
+      projectModal.setDataChanged(); // Signal that data has changed
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project");

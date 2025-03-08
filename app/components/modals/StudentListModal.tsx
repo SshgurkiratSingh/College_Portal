@@ -219,6 +219,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
       setStudents(updatedStudents);
 
       toast.success("Student updated successfully!");
+      studentListModal.setDataChanged(); // Signal that data has changed
       setEditingStudent(null);
     } catch (error) {
       toast.error("Failed to update student");
@@ -247,6 +248,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
       setStudents(updatedStudents);
 
       toast.success("Student deleted successfully!");
+      studentListModal.setDataChanged(); // Signal that data has changed
     } catch (error) {
       toast.error("Failed to delete student");
       console.error(error);
@@ -278,6 +280,7 @@ const StudentListModal: React.FC<StudentListModalProps> = () => {
           router.refresh();
           reset();
           setStep(STEPS.DETAILS);
+          studentListModal.setDataChanged(); // Signal that data has changed
           studentListModal.onClose();
         })
         .catch((error) => {

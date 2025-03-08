@@ -305,6 +305,7 @@ const AddSubjectModal = () => {
         setStep(STEPS.SUBJECT_DETAILS);
         setCourseOutcomes([{ name: "CO1", description: "" }]);
         setMappings([]);
+        subjectModal.setDataChanged(); // Signal that data has changed
         subjectModal.onClose();
       })
       .catch((error) => {

@@ -41,7 +41,12 @@ const ProjectsPage = () => {
   useEffect(() => {
     fetchSubjects();
     fetchProjects();
-  }, []);
+    
+    // Reset dataChanged flag after fetching
+    if (projectModal.dataChanged) {
+      projectModal.resetDataChanged();
+    }
+  }, [projectModal.dataChanged]);
 
   const fetchSubjects = async () => {
     try {
@@ -85,7 +90,8 @@ const ProjectsPage = () => {
       setIsLoading(true);
       await axios.delete(`/api/projects/${projectId}`);
       toast.success("Project deleted successfully");
-      fetchProjects(); // Refresh the list
+      projectModal.setDataChanged(); // Signal that data has changed
+      // No need to call fetchProjects() directly as it will be triggered by useEffect
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project");

@@ -37,12 +37,18 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
   const [studentLists, setStudentLists] = useState<StudentList[]>([]);
   const studentListModal = useStudentListModal();
 
-  // Fetch student lists on component mount
+  // Fetch student lists when component mounts or when data changes
   useEffect(() => {
     const fetchStudentLists = async () => {
+      setIsLoading(true);
       try {
         const response = await axios.get("/api/student-lists");
         setStudentLists(response.data);
+        
+        // Reset dataChanged flag after fetching
+        if (studentListModal.dataChanged) {
+          studentListModal.resetDataChanged();
+        }
       } catch (error) {
         toast.error("Failed to fetch student lists");
         console.error(error);
@@ -52,7 +58,7 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
     };
 
     fetchStudentLists();
-  }, []);
+  }, [studentListModal.dataChanged]);
 
   // Open modal to create a new student list
   const handleCreateList = () => {
@@ -82,6 +88,7 @@ const StudentListsClient: React.FC<StudentListsClientProps> = ({
     try {
       await axios.delete(`/api/student-lists/${listId}`);
       setStudentLists((prev) => prev.filter((list) => list.id !== listId));
+      studentListModal.setDataChanged(); // Signal that data has changed
       toast.success("Student list deleted successfully");
     } catch (error) {
       toast.error("Failed to delete student list");

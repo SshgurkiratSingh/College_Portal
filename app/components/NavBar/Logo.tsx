@@ -12,7 +12,8 @@ const Lgog = () => {
     <>
       <ClientOnly>
         <p onClick={handleClick} className="titBlock text-4xl">
-          CurriculumSync
+          <Image src="/images/ccetLogo.png" alt="Logo" width={40} height={40} />
+         
         </p>
       </ClientOnly>
     </>

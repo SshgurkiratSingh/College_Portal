@@ -44,8 +44,13 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
   useEffect(() => {
     if (params.projectId) {
       fetchProjectData();
+      
+      // Reset dataChanged flag after fetching
+      if (projectQuestionModal.dataChanged) {
+        projectQuestionModal.resetDataChanged();
+      }
     }
-  }, [params.projectId]);
+  }, [params.projectId, projectQuestionModal.dataChanged]);
 
   const fetchProjectData = async () => {
     try {
@@ -90,7 +95,8 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
       setIsLoading(true);
       await axios.delete(`/api/projects/questions/${questionId}`);
       toast.success("Question deleted successfully");
-      fetchProjectData(); // Refresh the data
+      projectQuestionModal.setDataChanged(); // Signal that data has changed
+      // No need to call fetchProjectData() directly as it will be triggered by useEffect
     } catch (error) {
       console.error("Error deleting question:", error);
       toast.error("Failed to delete question");
