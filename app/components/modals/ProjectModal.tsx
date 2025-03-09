@@ -75,7 +75,7 @@ const ProjectModal = () => {
   const fetchSubjectProjects = async (subjectId: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/subjects/${subjectId}/projects`);
+      const response = await axios.get(`/api/projects?subjectId=${subjectId}`);
       setSubjectProjects(response.data);
     } catch (error) {
       console.error("Error fetching subject projects:", error);
