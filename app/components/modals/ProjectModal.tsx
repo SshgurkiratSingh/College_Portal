@@ -12,6 +12,13 @@ interface Subject {
   code?: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  projectType: ProjectType;
+  subjectId: string;
+}
+
 const ProjectModal = () => {
   const projectModal = useProjectModal();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +29,8 @@ const ProjectModal = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [markError, setMarkError] = useState<string | null>(null);
+  const [sessionalError, setSessionalError] = useState<string | null>(null);
+  const [subjectProjects, setSubjectProjects] = useState<Project[]>([]);
 
   // Fetch subjects when the modal opens
   useEffect(() => {
@@ -38,6 +47,21 @@ const ProjectModal = () => {
     }
   }, [projectModal.isOpen, projectModal.editMode, projectModal.projectId]);
 
+  // Fetch existing projects for the selected subject
+  useEffect(() => {
+    if (selectedSubjectId) {
+      fetchSubjectProjects(selectedSubjectId);
+    } else {
+      setSubjectProjects([]);
+      setSessionalError(null);
+    }
+  }, [selectedSubjectId]);
+
+  // Check sessional limit when project type changes
+  useEffect(() => {
+    validateSessionalLimit();
+  }, [projectType, subjectProjects]);
+
   const fetchSubjects = async () => {
     try {
       const response = await axios.get('/api/subjects');
@@ -45,6 +69,19 @@ const ProjectModal = () => {
     } catch (error) {
       console.error("Error fetching subjects:", error);
       toast.error("Failed to load subjects");
+    }
+  };
+
+  const fetchSubjectProjects = async (subjectId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`/api/subjects/${subjectId}/projects`);
+      setSubjectProjects(response.data);
+    } catch (error) {
+      console.error("Error fetching subject projects:", error);
+      toast.error("Failed to load subject projects");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,12 +96,39 @@ const ProjectModal = () => {
       setProjectType(projectData.projectType);
       setTotalMarks(projectData.totalMarks);
       setSelectedSubjectId(projectData.subjectId);
+      
+      // Fetch other projects for this subject to validate sessional limit
+      if (projectData.subjectId) {
+        await fetchSubjectProjects(projectData.subjectId);
+      }
     } catch (error) {
       console.error("Error fetching project data:", error);
       toast.error("Failed to load project data");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const validateSessionalLimit = () => {
+    if (projectType !== ProjectType.SESSIONAL || !selectedSubjectId) {
+      setSessionalError(null);
+      return true;
+    }
+
+    // Count existing sessional projects (excluding current one if in edit mode)
+    const existingSessionals = subjectProjects.filter(
+      project => 
+        project.projectType === ProjectType.SESSIONAL && 
+        (!projectModal.editMode || project.id !== projectModal.projectId)
+    ).length;
+
+    if (existingSessionals >= 2) {
+      setSessionalError("This subject already has 2 sessional projects. Maximum limit reached.");
+      return false;
+    }
+
+    setSessionalError(null);
+    return true;
   };
 
   const validateMarks = () => {
@@ -106,6 +170,10 @@ const ProjectModal = () => {
       return;
     }
 
+    if (!validateSessionalLimit()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -143,6 +211,8 @@ const ProjectModal = () => {
     setTotalMarks(0);
     setSelectedSubjectId(null);
     setMarkError(null);
+    setSessionalError(null);
+    setSubjectProjects([]);
   };
 
   const bodyContent = (
@@ -186,6 +256,8 @@ const ProjectModal = () => {
                 } else {
                   setMarkError(null);
                 }
+                // Reset sessional error - will be re-validated by the useEffect
+                setSessionalError(null);
               }}
               className={`p-2 rounded-md border transition ${
                 projectType === type
@@ -198,6 +270,9 @@ const ProjectModal = () => {
             </button>
           ))}
         </div>
+        {sessionalError && (
+          <p className="text-red-500 text-sm">{sessionalError}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

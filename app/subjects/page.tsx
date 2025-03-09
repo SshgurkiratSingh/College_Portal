@@ -335,14 +335,14 @@ const SubjectsPage = () => {
                       {subjectProjects[subject.id].map((project) => (
                         <div
                           key={project.id}
-                          className="border rounded-md p-3 hover:bg-gray-100 transition-colors"
+                          className="border rounded-md p-3 hover:bg-navy to-blue-950-100 transition-colors"
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <h4 className="font-medium text-gray-800">
+                              <h4 className="font-medium text-white-800">
                                 {project.name}
                               </h4>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm text-white-500">
                                 <span
                                   className={`inline-block px-2 py-1 mr-2 rounded-full text-xs font-medium 
                                   ${
@@ -360,7 +360,7 @@ const SubjectsPage = () => {
                                 <span>{project.totalMarks} marks</span>
                               </div>
                               {project.description && (
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-white-600 mt-1">
                                   {project.description.substring(0, 100)}
                                   {project.description.length > 100
                                     ? "..."
