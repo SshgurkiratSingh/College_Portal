@@ -343,12 +343,7 @@ const SubjectsPage = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-md font-medium">Projects:</h3>
-                    <button
-                      onClick={() => handleCreateProject(subject.id)}
-                      className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
-                    >
-                      Create Project
-                    </button>
+                   
                   </div>
                   {!subjectProjects[subject.id] ||
                   subjectProjects[subject.id].length === 0 ? (

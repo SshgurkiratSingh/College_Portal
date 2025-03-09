@@ -246,8 +246,8 @@ const FastMarksEntry = ({
   const saveScores = async () => {
     try {
       setSaving(true);
-      // Send only scores with a value greater than 0
-      const scoresToSave = scores.filter((score) => score.score > 0);
+      // Send all scores including zeros
+      const scoresToSave = scores;
       
       // Use our apiClient with offline support
       await apiClient.post(`/api/projects/${projectId}/scores/batch`, {
@@ -325,6 +325,7 @@ const FastMarksEntry = ({
       inputRefs.current[0]?.focus();
     }, 100);
   };
+  
 
   const handleKeyDown = (
     e: ReactKeyboardEvent<HTMLInputElement>,
@@ -333,6 +334,13 @@ const FastMarksEntry = ({
     if (e.ctrlKey && e.key === "s") {
       e.preventDefault();
       saveScores();
+      return;
+    }
+    const input = e.target as HTMLInputElement;
+    if (e.key === "Backspace") {
+      e.preventDefault(); // Prevent default deletion behavior
+      handleScoreChange(index, "0"); // Reset score to 0
+      input.select(); // Select the "0" for easy replacement
       return;
     }
     switch (e.key) {
@@ -495,9 +503,10 @@ const FastMarksEntry = ({
                         <input
                           ref={(el) => (inputRefs.current[index] = el)}
                           type="number"
+                          step="any"
                           min="0"
                           max={question.maxMarks}
-                          value={scores[index]?.score || ""}
+                          value={scores[index]?.score ?? ""}
                           onChange={(e) =>
                             handleScoreChange(index, e.target.value)
                           }
@@ -551,6 +560,7 @@ const FastMarksEntry = ({
             <li>Enter: Move to next field</li>
             <li>Ctrl+S: Save scores</li>
             <li>/ : Focus search</li>
+            <li>Backspace: Reset score to 0</li>
           </ul>
         </div>
       </div>
