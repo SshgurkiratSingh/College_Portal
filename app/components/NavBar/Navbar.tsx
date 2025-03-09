@@ -31,7 +31,7 @@ const Navbar: React.FC<NavBarProps> = ({ currentUser, totalAlerts }) => {
   return (
     <>
       <Container>
-        <div className="navbar bg-transparent w-full">
+        <div className="navbar bg-transparent w-full pt-6">
           <div className="flex-1">
             <div className="btn btn-ghost normal-case">
               <Lgog />
