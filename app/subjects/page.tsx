@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
+import { useNetworkStatus } from "../utils/networkStatus";
 import { toast } from "react-hot-toast";
 import Container from "../components/container";
 import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
+
 import useProjectModal from "../hooks/useProjectModal";
 import useStudentListModal from "../hooks/useStudentListModal";
 import ClientOnly from "../components/ClientOnly";
+
 import ProjectModal from "../components/modals/ProjectModal";
 import { ProjectType } from "../hooks/useProjectModal";
 
@@ -61,6 +64,7 @@ interface Project {
 const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
+
   const studentListModal = useStudentListModal();
   const projectModal = useProjectModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -69,29 +73,31 @@ const SubjectsPage = () => {
   const [subjectProjects, setSubjectProjects] = useState<
     Record<string, Project[]>
   >({});
+  const isOnline = useNetworkStatus();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const subjectsResponse = await axios.get("/api/subjects");
-        setSubjects(subjectsResponse.data);
+        // Use apiClient instead of direct axios calls
+        const subjectsData = await apiClient.get<Subject[]>("/api/subjects");
+        setSubjects(subjectsData);
 
-        const studentListsResponse = await axios.get("/api/student-lists");
+        const studentListsData = await apiClient.get<StudentList[]>("/api/student-lists");
         const studentListsMap: Record<string, string> = {};
-        studentListsResponse.data.forEach((list: StudentList) => {
+        studentListsData.forEach((list: StudentList) => {
           studentListsMap[list.id] = list.name;
         });
         setStudentLists(studentListsMap);
 
         // Now fetch projects for each subject
         const projectsMap: Record<string, Project[]> = {};
-        for (const subject of subjectsResponse.data) {
+        for (const subject of subjectsData) {
           try {
-            const projectsResponse = await axios.get(
+            const projectsData = await apiClient.get<Project[]>(
               `/api/projects?subjectId=${subject.id}`
             );
-            projectsMap[subject.id] = projectsResponse.data;
+            projectsMap[subject.id] = projectsData;
           } catch (error) {
             console.error(
               `Error fetching projects for subject ${subject.id}:`,
@@ -114,7 +120,9 @@ const SubjectsPage = () => {
         }
       } catch (error) {
         console.error("Error fetching subjects:", error);
-        toast.error("Failed to load subjects");
+        toast.error(isOnline 
+          ? "Failed to load subjects" 
+          : "You're offline. Using cached data if available.");
       } finally {
         setIsLoading(false);
       }
@@ -134,8 +142,16 @@ const SubjectsPage = () => {
       return;
     }
     try {
-      await axios.delete(`/api/subjects/${subjectId}`);
-      toast.success("Subject deleted successfully");
+      // Use apiClient with offline support
+      await apiClient.delete(`/api/subjects/${subjectId}`, { offlineEnabled: true });
+      
+      if (!isOnline) {
+        toast.success("Delete operation queued. Will be processed when back online.");
+      } else {
+        toast.success("Subject deleted successfully");
+      }
+      
+      // Optimistically update UI
       setSubjects((current) =>
         current.filter((subject) => subject.id !== subjectId)
       );
@@ -159,8 +175,6 @@ const SubjectsPage = () => {
     subjectModal.onOpen(SubjectModalMode.CREATE);
   };
 
-  const handleUploadPaper = (subjectId: string) => {
-    };
 
   const handleCreateProject = (subjectId: string) => {
     projectModal.onOpen(subjectId);
@@ -180,10 +194,16 @@ const SubjectsPage = () => {
     }
     try {
       setIsLoading(true);
-      await axios.delete(`/api/projects/${projectId}`);
-      toast.success("Project deleted successfully");
+      // Use apiClient with offline support
+      await apiClient.delete(`/api/projects/${projectId}`, { offlineEnabled: true });
+      
+      if (!isOnline) {
+        toast.success("Delete operation queued. Will be processed when back online.");
+      } else {
+        toast.success("Project deleted successfully");
+      }
 
-      // Update the local state to remove the deleted project
+      // Update the local state to remove the deleted project (optimistic UI update)
       setSubjectProjects((prev) => {
         const newProjectsMap = { ...prev };
         for (const subjectId in newProjectsMap) {
@@ -323,7 +343,12 @@ const SubjectsPage = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-md font-medium">Projects:</h3>
-                  
+                    <button
+                      onClick={() => handleCreateProject(subject.id)}
+                      className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
+                    >
+                      Create Project
+                    </button>
                   </div>
                   {!subjectProjects[subject.id] ||
                   subjectProjects[subject.id].length === 0 ? (
@@ -401,6 +426,7 @@ const SubjectsPage = () => {
           </div>
         </div>
       </Container>
+
       <ProjectModal />
     </ClientOnly>
   );

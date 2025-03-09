@@ -6,13 +6,13 @@ import {
   useRef,
   KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import { debounce } from "lodash";
 import Container from "../components/container";
 import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
-import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
+import apiClient from "../utils/apiClient";
+import { useNetworkStatus } from "../utils/networkStatus";
 
 interface ProjectQuestion {
   id: string;
@@ -67,17 +67,40 @@ const FastMarksEntry = ({
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Use our network status hook to check if we're online
+  const isOnline = useNetworkStatus();
+  const [offlineSaved, setOfflineSaved] = useState<boolean>(false);
+  
   // Create a unique session ID when component opens
   useEffect(() => {
     if (isOpen) {
       setSessionId(`mark-entry-${Date.now()}`);
       fetchQuestions();
       fetchStudents();
+      
+      // If we're online, prefetch all scores for the project for faster access
+      if (isOnline) {
+        prefetchAllScores();
+      }
+      
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);
     }
   }, [isOpen, projectId]);
+  
+  // Process any pending offline actions when we come back online
+  useEffect(() => {
+    if (isOnline && offlineSaved) {
+      toast.success("Back online. Syncing your offline changes...");
+      apiClient.processPendingOfflineActions().then((processed) => {
+        if (processed > 0) {
+          toast.success(`Successfully synchronized ${processed} offline changes`);
+        }
+        setOfflineSaved(false);
+      });
+    }
+  }, [isOnline, offlineSaved]);
 
   // Calculate total possible marks
   useEffect(() => {
@@ -111,11 +134,22 @@ const FastMarksEntry = ({
     }
   }, [searchTerm, students]);
 
+  const prefetchAllScores = async () => {
+    try {
+      console.log("Prefetching all scores for caching");
+      await apiClient.get(`/api/projects/${projectId}/scores/all`);
+    } catch (error) {
+      console.error("Error prefetching scores:", error);
+      // Silent fail - this is just a performance optimization
+    }
+  };
+
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/projects/${projectId}/questions`);
-      setQuestions(response.data);
+      // Use our apiClient with caching
+      const data = await apiClient.get<ProjectQuestion[]>(`/api/projects/${projectId}/questions`);
+      setQuestions(data);
     } catch (error) {
       console.error("Error fetching questions:", error);
       toast.error("Failed to load project questions");
@@ -127,8 +161,9 @@ const FastMarksEntry = ({
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/projects/${projectId}/students`);
-      setStudents(response.data);
+      // Use our apiClient with caching
+      const data = await apiClient.get<Student[]>(`/api/projects/${projectId}/students`);
+      setStudents(data);
     } catch (error) {
       console.error("Error fetching students:", error);
       toast.error("Failed to load students");
@@ -140,16 +175,20 @@ const FastMarksEntry = ({
   const fetchScoresForStudent = async (studentId: string) => {
     try {
       setLoading(true);
-      const response = await axios.get(
+      
+      // Use our apiClient with caching
+      const response = await apiClient.get<any[]>(
         `/api/projects/${projectId}/scores?studentId=${studentId}`
       );
+      
       // Map the scores to our internal format
-      const existingScores: Score[] = response.data.map((score: any) => ({
+      const existingScores: Score[] = response.map((score: any) => ({
         id: score.id,
         projectQuestionId: score.projectQuestionId,
         studentId: score.studentId,
         score: score.score,
       }));
+      
       // If not all questions have scores, create empty ones
       const allScores = questions.map((question) => {
         const existingScore = existingScores.find(
@@ -166,8 +205,39 @@ const FastMarksEntry = ({
       setScores(allScores);
     } catch (error) {
       console.error("Error fetching scores:", error);
-      toast.error("Failed to load student scores");
-      setScores([]);
+      
+      // If offline and error, try to get from cache
+      if (!isOnline) {
+        try {
+          // Try to find scores in the prefetched all scores
+          const allScores = await apiClient.get<any[]>(`/api/projects/${projectId}/scores/all`);
+          if (allScores) {
+            const studentScores = allScores.filter(score => score.studentId === studentId);
+            if (studentScores.length > 0) {
+              setScores(studentScores.map(score => ({
+                id: score.id,
+                projectQuestionId: score.projectQuestionId,
+                studentId: score.studentId,
+                score: score.score,
+              })));
+              return;
+            }
+          }
+        } catch {
+          // If no cached data, show empty scores
+          toast.error("You're offline and scores for this student aren't cached");
+        }
+      } else {
+        toast.error("Failed to load student scores");
+      }
+      
+      // Create empty scores if we couldn't get any
+      const emptyScores = questions.map(question => ({
+        projectQuestionId: question.id,
+        studentId,
+        score: 0,
+      }));
+      setScores(emptyScores);
     } finally {
       setLoading(false);
     }
@@ -178,12 +248,21 @@ const FastMarksEntry = ({
       setSaving(true);
       // Send only scores with a value greater than 0
       const scoresToSave = scores.filter((score) => score.score > 0);
-      await axios.post(`/api/projects/${projectId}/scores/batch`, {
+      
+      // Use our apiClient with offline support
+      await apiClient.post(`/api/projects/${projectId}/scores/batch`, {
         scores: scoresToSave,
         sessionId,
-      });
+      }, { offlineEnabled: true });
+      
       setUnsavedChanges(false);
-      toast.success("Scores saved successfully");
+      
+      if (!isOnline) {
+        setOfflineSaved(true);
+        toast.success("Scores saved offline. Will sync when back online.");
+      } else {
+        toast.success("Scores saved successfully");
+      }
     } catch (error) {
       console.error("Error saving scores:", error);
       toast.error("Failed to save scores");
@@ -192,13 +271,14 @@ const FastMarksEntry = ({
     }
   };
 
-  // Debounced save (1 minute debounce)
+  // Debounced save (30 seconds debounce for auto-save)
   const debouncedSave = useRef(
     debounce(() => {
       if (unsavedChanges && selectedStudent) {
+        console.log("Auto-saving scores...");
         saveScores();
       }
-    }, 60000)
+    }, 30000) // Changed from 60 seconds to 30 seconds
   ).current;
 
   useEffect(() => {
