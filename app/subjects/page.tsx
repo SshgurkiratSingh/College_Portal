@@ -8,11 +8,9 @@ import Container from "../components/container";
 import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
-import useUploadPaperModal from "../hooks/useUploadPaperModal";
 import useProjectModal from "../hooks/useProjectModal";
 import useStudentListModal from "../hooks/useStudentListModal";
 import ClientOnly from "../components/ClientOnly";
-import UploadPaperModal from "../components/modals/UploadPaperModal";
 import ProjectModal from "../components/modals/ProjectModal";
 import { ProjectType } from "../hooks/useProjectModal";
 
@@ -63,7 +61,6 @@ interface Project {
 const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
-  const uploadPaperModal = useUploadPaperModal();
   const studentListModal = useStudentListModal();
   const projectModal = useProjectModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -163,8 +160,7 @@ const SubjectsPage = () => {
   };
 
   const handleUploadPaper = (subjectId: string) => {
-    uploadPaperModal.onOpen(subjectId);
-  };
+    };
 
   const handleCreateProject = (subjectId: string) => {
     projectModal.onOpen(subjectId);
@@ -282,12 +278,7 @@ const SubjectsPage = () => {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => handleUploadPaper(subject.id)}
-                      className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-md text-sm transition"
-                    >
-                      Upload Paper
-                    </button>
+                  
                     <button
                       onClick={() => handleCreateProject(subject.id)}
                       className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
@@ -332,12 +323,7 @@ const SubjectsPage = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-md font-medium">Projects:</h3>
-                    <button
-                      onClick={() => handleCreateProject(subject.id)}
-                      className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
-                    >
-                      Create Project
-                    </button>
+                  
                   </div>
                   {!subjectProjects[subject.id] ||
                   subjectProjects[subject.id].length === 0 ? (
@@ -415,7 +401,6 @@ const SubjectsPage = () => {
           </div>
         </div>
       </Container>
-      <UploadPaperModal />
       <ProjectModal />
     </ClientOnly>
   );

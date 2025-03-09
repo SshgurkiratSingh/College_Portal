@@ -556,7 +556,7 @@ const AddSubjectModal = () => {
       isOpen={subjectModal.isOpen}
       title="Subject Management"
       actionLabel={actionLabel}
-      onClose={subjectModal.onClose}
+      onClose={subjectModal.onClose}  
       secondaryAction={step === STEPS.SUBJECT_DETAILS ? undefined : onBack}
       secondaryActionLabel={secondaryActionLabel}
       onSubmit={onAction}

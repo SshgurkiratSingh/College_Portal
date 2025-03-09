@@ -113,13 +113,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ currentUser }) => {
                   onClick={() => router.push("/")}
                   icon={<BiHome />}
                 />
-                <MenuItem
-                  label="Profile "
-                  onClick={() => {
-                    router.push("/Profile");
-                  }}
-                  icon={<TiUser />}
-                />
+              
                 <MenuItem
                   label="Student Lists"
                   onClick={() => {
