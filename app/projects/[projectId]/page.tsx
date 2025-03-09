@@ -8,6 +8,8 @@ import Heading from "../../components/Heading";
 import Button from "../../components/Button";
 import EmptyState from "../../components/EmptyState";
 import useProjectQuestionModal from "../../hooks/useProjectQuestionModal";
+import useFastMarksEntryModal from "../../hooks/useFastMarksEntryModal";
+import FastMarksEntry from "../../components/FastMarksEntry";
 import { ProjectType } from "../../hooks/useProjectModal";
 
 interface Project {
@@ -36,6 +38,7 @@ interface ProjectQuestion {
 const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
   const router = useRouter();
   const projectQuestionModal = useProjectQuestionModal();
+  const fastMarksEntryModal = useFastMarksEntryModal();
   const [project, setProject] = useState<Project | null>(null);
   const [questions, setQuestions] = useState<ProjectQuestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +47,7 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
   useEffect(() => {
     if (params.projectId) {
       fetchProjectData();
-      
+
       // Reset dataChanged flag after fetching
       if (projectQuestionModal.dataChanged) {
         projectQuestionModal.resetDataChanged();
@@ -203,10 +206,15 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
                 )}
               </div>
             </div>
-            <div>
+            <div className="space-y-2">
               <Button
                 label="Add Question"
                 onClick={() => projectQuestionModal.onOpen(project.id)}
+              />
+              <Button
+                label="Fast Marks Entry"
+                onClick={() => fastMarksEntryModal.onOpen(project.id)}
+                outline
               />
             </div>
           </div>
@@ -292,8 +300,34 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
           </div>
         )}
       </div>
+
+      <ModalProvider />
     </div>
   );
 };
 
 export default ProjectDetail;
+
+// Render FastMarksEntry modal when triggered
+const FastMarksEntryModalProvider = () => {
+  const fastMarksEntryModal = useFastMarksEntryModal();
+
+  return (
+    <>
+      {fastMarksEntryModal.isOpen && fastMarksEntryModal.projectId && (
+        <FastMarksEntry
+          projectId={fastMarksEntryModal.projectId}
+          isOpen={fastMarksEntryModal.isOpen}
+          onClose={fastMarksEntryModal.onClose}
+        />
+      )}
+    </>
+  );
+};
+
+// Register FastMarksEntryModal at the bottom of the page to ensure it's available
+export function ModalProvider() {
+  return <FastMarksEntryModalProvider />;
+}
+
+export const Dynamic = "force-dynamic";

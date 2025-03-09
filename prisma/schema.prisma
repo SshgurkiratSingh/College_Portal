@@ -151,7 +151,7 @@ model Project {
 model ProjectQuestion {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   questionNum String // e.g., 1, 2, 3, ...
-  maxMarks    Int
+  maxMarks    Float
   description String?
 
   // Each question is linked to a specific project
@@ -160,7 +160,8 @@ model ProjectQuestion {
 
   /// Link to a Course Outcome code.
   /// This CO code should correspond to one of the COs defined in the subject's courseOutcomes JSON.
-  coCode String
+  coCode               String
+  ProjectQuestionScore ProjectQuestionScore[]
 }
 
 //----------------------------------------------
@@ -192,8 +193,9 @@ model Student {
   batch   String? // Optional batch
 
   // Link to StudentList
-  studentList   StudentList @relation(fields: [studentListId], references: [id])
-  studentListId String      @db.ObjectId
+  studentList          StudentList            @relation(fields: [studentListId], references: [id])
+  studentListId        String                 @db.ObjectId
+  ProjectQuestionScore ProjectQuestionScore[]
 }
 
 model StudentListUpload {
@@ -204,4 +206,14 @@ model StudentListUpload {
   // Link to User (Teacher)
   user   User   @relation(fields: [userId], references: [id])
   userId String @db.ObjectId
+}
+
+model ProjectQuestionScore {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  projectQuestion   ProjectQuestion @relation(fields: [projectQuestionId], references: [id])
+  projectQuestionId String          @db.ObjectId
+  student           Student         @relation(fields: [studentId], references: [id])
+  studentId         String          @db.ObjectId
+  score             Float
+  createdAt         DateTime        @default(now())
 }
