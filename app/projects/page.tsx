@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
+import { useNetworkStatus } from "../utils/networkStatus";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Heading from "../components/Heading";
@@ -37,6 +38,7 @@ const ProjectsPage = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const isOnline = useNetworkStatus();
 
   useEffect(() => {
     fetchSubjects();
@@ -50,8 +52,9 @@ const ProjectsPage = () => {
 
   const fetchSubjects = async () => {
     try {
-      const response = await axios.get("/api/subjects");
-      setSubjects(response.data);
+      // Use cached apiClient
+      const data = await apiClient.get<Subject[]>("/api/subjects");
+      setSubjects(data);
     } catch (error) {
       console.error("Error fetching subjects:", error);
       toast.error("Failed to load subjects");
@@ -65,11 +68,12 @@ const ProjectsPage = () => {
         ? `/api/projects?subjectId=${selectedSubject}`
         : "/api/projects";
 
-      const response = await axios.get(url);
-      setProjects(response.data);
+      // Use cached apiClient
+      const data = await apiClient.get<Project[]>(url);
+      setProjects(data);
     } catch (error) {
       console.error("Error fetching projects:", error);
-      toast.error("Failed to load projects");
+      toast.error(isOnline ? "Failed to load projects" : "You're offline. Using cached data if available.");
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +96,18 @@ const ProjectsPage = () => {
 
     try {
       setIsLoading(true);
-      await axios.delete(`/api/projects/${projectId}`);
-      toast.success("Project deleted successfully");
+      // Use apiClient with offline support
+      await apiClient.delete(`/api/projects/${projectId}`, { offlineEnabled: true });
+      
+      if (!isOnline) {
+        toast.success("Delete operation queued. Will be processed when back online.");
+      } else {
+        toast.success("Project deleted successfully");
+      }
+      
+      // Optimistically update the UI
+      setProjects(prev => prev.filter(project => project.id !== projectId));
       projectModal.setDataChanged(); // Signal that data has changed
-      // No need to call fetchProjects() directly as it will be triggered by useEffect
     } catch (error) {
       console.error("Error deleting project:", error);
       toast.error("Failed to delete project");
