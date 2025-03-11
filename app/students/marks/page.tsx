@@ -137,14 +137,14 @@ const StudentMarksPage = () => {
           </select>
         </div>
 
-        {isLoading ? (
+        {isLoading && selectedProject ? (
           <div className="flex items-center justify-center h-48">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : !selectedProject ? (
           <EmptyState
-            title="No data to display"
-            subtitle="Please select a subject and project to view student marks"
+            title="Select a subject and project"
+            subtitle="Please choose a subject and project to view student marks"
           />
         ) : studentScores.length === 0 ? (
           <EmptyState
