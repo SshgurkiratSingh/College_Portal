@@ -70,32 +70,29 @@ const FastMarksEntry = ({
   // Use our network status hook to check if we're online
   const isOnline = useNetworkStatus();
   const [offlineSaved, setOfflineSaved] = useState<boolean>(false);
-  
+
   // Create a unique session ID when component opens
   useEffect(() => {
     if (isOpen) {
       setSessionId(`mark-entry-${Date.now()}`);
       fetchQuestions();
       fetchStudents();
-      
-      // If we're online, prefetch all scores for the project for faster access
-      if (isOnline) {
-        prefetchAllScores();
-      }
-      
+
       setTimeout(() => {
         searchInputRef.current?.focus();
       }, 100);
     }
   }, [isOpen, projectId]);
-  
+
   // Process any pending offline actions when we come back online
   useEffect(() => {
     if (isOnline && offlineSaved) {
       toast.success("Back online. Syncing your offline changes...");
       apiClient.processPendingOfflineActions().then((processed) => {
         if (processed > 0) {
-          toast.success(`Successfully synchronized ${processed} offline changes`);
+          toast.success(
+            `Successfully synchronized ${processed} offline changes`
+          );
         }
         setOfflineSaved(false);
       });
@@ -125,8 +122,10 @@ const FastMarksEntry = ({
     if (searchTerm) {
       const filtered = students.filter(
         (student) =>
-          student.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.name.toLowerCase().includes(searchTerm.toLowerCase())
+          (student.rollNo?.toLowerCase() || "").includes(
+            searchTerm.toLowerCase()
+          ) ||
+          (student.name?.toLowerCase() || "").includes(searchTerm.toLowerCase())
       );
       setFilteredStudents(filtered);
     } else {
@@ -134,21 +133,15 @@ const FastMarksEntry = ({
     }
   }, [searchTerm, students]);
 
-  const prefetchAllScores = async () => {
-    try {
-      console.log("Prefetching all scores for caching");
-      await apiClient.get(`/api/projects/${projectId}/scores/all`);
-    } catch (error) {
-      console.error("Error prefetching scores:", error);
-      // Silent fail - this is just a performance optimization
-    }
-  };
-
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      // Use our apiClient with caching
-      const data = await apiClient.get<ProjectQuestion[]>(`/api/projects/${projectId}/questions`);
+      // Direct API call without caching
+      const response = await fetch(`/api/projects/${projectId}/questions`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch questions");
+      }
+      const data = await response.json();
       setQuestions(data);
     } catch (error) {
       console.error("Error fetching questions:", error);
@@ -161,8 +154,12 @@ const FastMarksEntry = ({
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      // Use our apiClient with caching
-      const data = await apiClient.get<Student[]>(`/api/projects/${projectId}/students`);
+      // Direct API call without caching
+      const response = await fetch(`/api/projects/${projectId}/students`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch students");
+      }
+      const data = await response.json();
       setStudents(data);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -175,20 +172,24 @@ const FastMarksEntry = ({
   const fetchScoresForStudent = async (studentId: string) => {
     try {
       setLoading(true);
-      
-      // Use our apiClient with caching
-      const response = await apiClient.get<any[]>(
+
+      // Direct API call without caching
+      const response = await fetch(
         `/api/projects/${projectId}/scores?studentId=${studentId}`
       );
-      
+      if (!response.ok) {
+        throw new Error("Failed to fetch scores");
+      }
+      const data = await response.json();
+
       // Map the scores to our internal format
-      const existingScores: Score[] = response.map((score: any) => ({
+      const existingScores: Score[] = data.map((score: any) => ({
         id: score.id,
         projectQuestionId: score.projectQuestionId,
         studentId: score.studentId,
         score: score.score,
       }));
-      
+
       // If not all questions have scores, create empty ones
       const allScores = questions.map((question) => {
         const existingScore = existingScores.find(
@@ -205,34 +206,16 @@ const FastMarksEntry = ({
       setScores(allScores);
     } catch (error) {
       console.error("Error fetching scores:", error);
-      
-      // If offline and error, try to get from cache
+
+      // If offline, show error message
       if (!isOnline) {
-        try {
-          // Try to find scores in the prefetched all scores
-          const allScores = await apiClient.get<any[]>(`/api/projects/${projectId}/scores/all`);
-          if (allScores) {
-            const studentScores = allScores.filter(score => score.studentId === studentId);
-            if (studentScores.length > 0) {
-              setScores(studentScores.map(score => ({
-                id: score.id,
-                projectQuestionId: score.projectQuestionId,
-                studentId: score.studentId,
-                score: score.score,
-              })));
-              return;
-            }
-          }
-        } catch {
-          // If no cached data, show empty scores
-          toast.error("You're offline and scores for this student aren't cached");
-        }
+        toast.error("You're offline. Cannot fetch scores.");
       } else {
         toast.error("Failed to load student scores");
       }
-      
+
       // Create empty scores if we couldn't get any
-      const emptyScores = questions.map(question => ({
+      const emptyScores = questions.map((question) => ({
         projectQuestionId: question.id,
         studentId,
         score: 0,
@@ -248,21 +231,30 @@ const FastMarksEntry = ({
       setSaving(true);
       // Send all scores including zeros
       const scoresToSave = scores;
-      
-      // Use our apiClient with offline support
-      await apiClient.post(`/api/projects/${projectId}/scores/batch`, {
-        scores: scoresToSave,
-        sessionId,
-      }, { offlineEnabled: true });
-      
-      setUnsavedChanges(false);
-      
+
+      // Direct API call without offline support
       if (!isOnline) {
-        setOfflineSaved(true);
-        toast.success("Scores saved offline. Will sync when back online.");
-      } else {
-        toast.success("Scores saved successfully");
+        toast.error("You're offline. Cannot save scores.");
+        return;
       }
+
+      const response = await fetch(`/api/projects/${projectId}/scores/batch`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          scores: scoresToSave,
+          sessionId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save scores");
+      }
+
+      setUnsavedChanges(false);
+      toast.success("Scores saved successfully");
     } catch (error) {
       console.error("Error saving scores:", error);
       toast.error("Failed to save scores");
@@ -274,7 +266,7 @@ const FastMarksEntry = ({
   // Debounced save (30 seconds debounce for auto-save)
   const debouncedSave = useRef(
     debounce(() => {
-      if (unsavedChanges && selectedStudent) {
+      if (unsavedChanges && selectedStudent && isOnline) {
         console.log("Auto-saving scores...");
         saveScores();
       }
@@ -325,7 +317,6 @@ const FastMarksEntry = ({
       inputRefs.current[0]?.focus();
     }, 100);
   };
-  
 
   const handleKeyDown = (
     e: ReactKeyboardEvent<HTMLInputElement>,
@@ -376,35 +367,6 @@ const FastMarksEntry = ({
       handleSelectStudent(filteredStudents[0]);
     }
   };
-
-  useEffect(() => {
-    if (searchTerm) {
-      const filtered = students.filter(
-        (student) =>
-          student.rollNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredStudents(filtered);
-    } else {
-      setFilteredStudents([]);
-    }
-  }, [searchTerm, students]);
-
-  useEffect(() => {
-    if (questions.length > 0) {
-      const max = questions.reduce((sum, q) => sum + q.maxMarks, 0);
-      setTotalMaxScore(max);
-    }
-  }, [questions]);
-
-  useEffect(() => {
-    if (scores.length > 0) {
-      const total = scores.reduce((sum, s) => sum + s.score, 0);
-      setTotalScore(total);
-    } else {
-      setTotalScore(0);
-    }
-  }, [scores]);
 
   if (!isOpen) return null;
 
@@ -537,12 +499,17 @@ const FastMarksEntry = ({
                 {saving && (
                   <span className="text-blue-500 ml-2">Saving...</span>
                 )}
+                {!isOnline && (
+                  <span className="text-red-500 ml-2">
+                    Offline - Cannot save
+                  </span>
+                )}
               </div>
               <button
                 onClick={saveScores}
-                disabled={saving || !unsavedChanges}
+                disabled={saving || !unsavedChanges || !isOnline}
                 className={`px-4 py-2 rounded ${
-                  saving || !unsavedChanges
+                  saving || !unsavedChanges || !isOnline
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
                 } text-white`}

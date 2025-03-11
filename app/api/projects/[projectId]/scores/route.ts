@@ -46,12 +46,24 @@ export async function GET(
       );
     }
     
-    // Fetch scores for the student where the score's projectQuestion belongs to the project
+    // First, get all valid project question IDs for this project
+    const projectQuestions = await prisma.projectQuestion.findMany({
+      where: {
+        projectId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    
+    const projectQuestionIds = projectQuestions.map(q => q.id);
+    
+    // Now fetch scores using the valid question IDs
     const scores = await prisma.projectQuestionScore.findMany({
       where: {
         studentId,
-        projectQuestion: {
-          projectId,
+        projectQuestionId: {
+          in: projectQuestionIds,
         },
       },
     });
