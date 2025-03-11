@@ -77,7 +77,9 @@ const StudentMarksPage = () => {
 
   const fetchProjects = async (subjectId: string) => {
     try {
-      const data = await apiClient.get<Project[]>(`/api/subjects/${subjectId}/projects`);
+      const data = await apiClient.get<Project[]>(
+        `/api/subjects/${subjectId}/projects`
+      );
       setProjects(data);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -87,7 +89,9 @@ const StudentMarksPage = () => {
   const fetchStudentScores = async () => {
     try {
       setIsLoading(true);
-      const data = await apiClient.get<StudentScore[]>(`/api/projects/${selectedProject}/students`);
+      const data = await apiClient.get<StudentScore[]>(
+        `/api/projects/${selectedProject}/students/copo`
+      );
       setStudentScores(data);
     } catch (error) {
       console.error("Error fetching student scores:", error);
@@ -99,8 +103,11 @@ const StudentMarksPage = () => {
   return (
     <Container>
       <div className="pt-24">
-        <Heading title="Student Marks" subtitle="View and analyze student performance" />
-        
+        <Heading
+          title="Student Marks"
+          subtitle="View and analyze student performance"
+        />
+
         <div className="flex gap-4 mb-6">
           <select
             value={selectedSubject}
@@ -166,9 +173,14 @@ const StudentMarksPage = () => {
               </thead>
               <tbody>
                 {studentScores.map((score) => (
-                  <tr key={score.studentId} className="border-b border-gray-700">
+                  <tr
+                    key={score.studentId}
+                    className="border-b border-gray-700"
+                  >
                     <td className="py-2 px-4 text-white">{score.rollNo}</td>
-                    <td className="py-2 px-4 text-white">{score.studentName}</td>
+                    <td className="py-2 px-4 text-white">
+                      {score.studentName}
+                    </td>
                     <td className="py-2 px-4 text-white">
                       {score.totalScore}/{score.maxScore}
                     </td>
