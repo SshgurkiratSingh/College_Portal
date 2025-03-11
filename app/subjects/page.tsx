@@ -11,8 +11,10 @@ import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
 import useProjectModal from "../hooks/useProjectModal";
 import useStudentListModal from "../hooks/useStudentListModal";
+import useAttendanceInternalModal, { AttendanceInternalModalMode } from "../hooks/useAttendanceInternalModal";
 import ClientOnly from "../components/ClientOnly";
 import ProjectModal from "../components/modals/ProjectModal";
+import AttendanceInternalModal from "../components/modals/AttendanceInternalModal";
 import { ProjectType } from "../hooks/useProjectModal";
 
 interface CourseOutcome {
@@ -64,6 +66,7 @@ const SubjectsPage = () => {
   const subjectModal = useSubjectModal();
   const studentListModal = useStudentListModal();
   const projectModal = useProjectModal();
+  const attendanceInternalModal = useAttendanceInternalModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [studentLists, setStudentLists] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -216,6 +219,10 @@ const SubjectsPage = () => {
     }
   };
 
+  const handleCreateAttendance = (subjectId: string) => {
+    attendanceInternalModal.onOpen(AttendanceInternalModalMode.CREATE, subjectId);
+  };
+
   const handleViewProject = (projectId: string) => {
     router.push(`/projects/${projectId}`);
   };
@@ -348,6 +355,12 @@ const SubjectsPage = () => {
                       Create Project
                     </button>
                     <button
+                      onClick={() => handleCreateAttendance(subject.id)}
+                      className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-md text-sm transition"
+                    >
+                      Add Attendance/Internal
+                    </button>
+                    <button
                       onClick={() => handleEdit(subject.id)}
                       className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded-md text-sm transition"
                     >
@@ -466,6 +479,13 @@ const SubjectsPage = () => {
       </Container>
 
       <ProjectModal />
+      <AttendanceInternalModal 
+        isOpen={attendanceInternalModal.isOpen}
+        onClose={attendanceInternalModal.onClose}
+        subjectId={attendanceInternalModal.subjectId || ""}
+        mode={attendanceInternalModal.mode}
+        attendanceId={attendanceInternalModal.attendanceId}
+      />
     </ClientOnly>
   );
 };

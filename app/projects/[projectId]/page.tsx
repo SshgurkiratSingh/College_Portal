@@ -216,6 +216,14 @@ const ProjectDetail = ({ params }: { params: { projectId: string } }) => {
                 onClick={() => fastMarksEntryModal.onOpen(project.id)}
                 outline
               />
+              <Button
+                label="View Report"
+                onClick={() =>
+                  router.push(
+                    `/projects/${params.projectId}/reports/`
+                  )
+                }
+              />
             </div>
           </div>
         </div>
