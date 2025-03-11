@@ -48,7 +48,7 @@ const StudentsPage = () => {
   const fetchStudents = async () => {
     try {
       setIsLoading(true);
-      const data = await apiClient.get<Student[]>('/api/students');
+      const data = await apiClient.get<Student[]>('/api/student-lists');
       setStudents(data);
       setFilteredStudents(data);
     } catch (error) {
