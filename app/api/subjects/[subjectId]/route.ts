@@ -93,6 +93,9 @@ export async function DELETE(
   try {
     const existingSubject = await prisma.subject.findUnique({
       where: { id: params.subjectId },
+      include: {
+        projects: true, // Include related projects
+      },
     });
 
     if (!existingSubject) {
@@ -102,12 +105,18 @@ export async function DELETE(
       );
     }
 
+    // Step 1: Delete all related projects
+    await prisma.project.deleteMany({
+      where: { subjectId: params.subjectId },
+    });
+
+    // Step 2: Delete the subject
     await prisma.subject.delete({
       where: { id: params.subjectId },
     });
 
     return NextResponse.json(
-      { message: "Subject deleted successfully" },
+      { message: "Subject and related projects deleted successfully" },
       { status: 200 }
     );
   } catch (error) {

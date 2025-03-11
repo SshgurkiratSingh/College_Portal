@@ -9,11 +9,9 @@ import Container from "../components/container";
 import Heading from "../components/Heading";
 import EmptyState from "../components/EmptyState";
 import useSubjectModal, { SubjectModalMode } from "../hooks/useSubjectModal";
-
 import useProjectModal from "../hooks/useProjectModal";
 import useStudentListModal from "../hooks/useStudentListModal";
 import ClientOnly from "../components/ClientOnly";
-
 import ProjectModal from "../components/modals/ProjectModal";
 import { ProjectType } from "../hooks/useProjectModal";
 
@@ -64,7 +62,6 @@ interface Project {
 const SubjectsPage = () => {
   const router = useRouter();
   const subjectModal = useSubjectModal();
-
   const studentListModal = useStudentListModal();
   const projectModal = useProjectModal();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -75,62 +72,71 @@ const SubjectsPage = () => {
   >({});
   const isOnline = useNetworkStatus();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        // Use apiClient instead of direct axios calls
-        const subjectsData = await apiClient.get<Subject[]>("/api/subjects");
-        setSubjects(subjectsData);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
 
-        const studentListsData = await apiClient.get<StudentList[]>("/api/student-lists");
-        const studentListsMap: Record<string, string> = {};
-        studentListsData.forEach((list: StudentList) => {
-          studentListsMap[list.id] = list.name;
-        });
-        setStudentLists(studentListsMap);
+      // Force a fresh fetch from the server
+      const subjectsData = await apiClient.get<Subject[]>("/api/subjects", {
+        forceNetwork: true, // Bypass cache
+      });
+      setSubjects(subjectsData);
 
-        // Now fetch projects for each subject
-        const projectsMap: Record<string, Project[]> = {};
-        for (const subject of subjectsData) {
-          try {
-            const projectsData = await apiClient.get<Project[]>(
-              `/api/projects?subjectId=${subject.id}`
-            );
-            projectsMap[subject.id] = projectsData;
-          } catch (error) {
-            console.error(
-              `Error fetching projects for subject ${subject.id}:`,
-              error
-            );
-            projectsMap[subject.id] = [];
-          }
+      const studentListsData = await apiClient.get<StudentList[]>(
+        "/api/student-lists",
+        {
+          forceNetwork: true, // Bypass cache
         }
-        setSubjectProjects(projectsMap);
+      );
+      const studentListsMap: Record<string, string> = {};
+      studentListsData.forEach((list: StudentList) => {
+        studentListsMap[list.id] = list.name;
+      });
+      setStudentLists(studentListsMap);
 
-        // Reset the dataChanged flags after fetching
-        if (subjectModal.dataChanged) {
-          subjectModal.resetDataChanged();
+      // Fetch projects for each subject
+      const projectsMap: Record<string, Project[]> = {};
+      for (const subject of subjectsData) {
+        try {
+          const projectsData = await apiClient.get<Project[]>(
+            `/api/projects?subjectId=${subject.id}`,
+            { forceNetwork: true } // Bypass cache
+          );
+          projectsMap[subject.id] = projectsData;
+        } catch (error) {
+          console.error(
+            `Error fetching projects for subject ${subject.id}:`,
+            error
+          );
+          projectsMap[subject.id] = [];
         }
-        if (projectModal.dataChanged) {
-          projectModal.resetDataChanged();
-        }
-        if (studentListModal.dataChanged) {
-          studentListModal.resetDataChanged();
-        }
-      } catch (error) {
-        console.error("Error fetching subjects:", error);
-        toast.error(isOnline 
-          ? "Failed to load subjects" 
-          : "You're offline. Using cached data if available.");
-      } finally {
-        setIsLoading(false);
       }
-    };
+      setSubjectProjects(projectsMap);
 
+      // Reset the dataChanged flags after fetching
+      if (subjectModal.dataChanged) {
+        subjectModal.resetDataChanged();
+      }
+      if (projectModal.dataChanged) {
+        projectModal.resetDataChanged();
+      }
+      if (studentListModal.dataChanged) {
+        studentListModal.resetDataChanged();
+      }
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      toast.error(
+        isOnline
+          ? "Failed to load subjects"
+          : "You're offline. Using cached data if available."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
-
-    // Also refetch data when any dataChanged flag is true
   }, [
     subjectModal.dataChanged,
     projectModal.dataChanged,
@@ -142,15 +148,22 @@ const SubjectsPage = () => {
       return;
     }
     try {
-      // Use apiClient with offline support
-      await apiClient.delete(`/api/subjects/${subjectId}`, { offlineEnabled: true });
-      
+      // Delete the subject
+      await apiClient.delete(`/api/subjects/${subjectId}`, {
+        offlineEnabled: true,
+      });
+
+      // Clear the cache for subjects
+      await apiClient.clearCache("get:/api/subjects");
+
       if (!isOnline) {
-        toast.success("Delete operation queued. Will be processed when back online.");
+        toast.success(
+          "Delete operation queued. Will be processed when back online."
+        );
       } else {
         toast.success("Subject deleted successfully");
       }
-      
+
       // Optimistically update UI
       setSubjects((current) =>
         current.filter((subject) => subject.id !== subjectId)
@@ -171,13 +184,36 @@ const SubjectsPage = () => {
     subjectModal.onOpen(SubjectModalMode.VIEW, subjectId);
   };
 
-  const handleAddNew = () => {
-    subjectModal.onOpen(SubjectModalMode.CREATE);
+  const handleAddNew = async () => {
+    try {
+      // Clear the cache for subjects
+      // await apiClient.clearCache("get:/api/subjects");
+
+      // Open the modal for creating a new subject
+      subjectModal.onOpen(SubjectModalMode.CREATE);
+
+      // Optionally, refetch the data
+      fetchData();
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+      toast.error("Failed to clear cache");
+    }
   };
 
+  const handleCreateProject = async (subjectId: string) => {
+    try {
+      // Clear the cache for projects
+      // await apiClient.clearCache(`get:/api/projects?subjectId=${subjectId}`);
 
-  const handleCreateProject = (subjectId: string) => {
-    projectModal.onOpen(subjectId);
+      // Open the modal for creating a new project
+      projectModal.onOpen(subjectId);
+
+      // Optionally, refetch the data
+      fetchData();
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+      toast.error("Failed to clear cache");
+    }
   };
 
   const handleViewProject = (projectId: string) => {
@@ -188,17 +224,24 @@ const SubjectsPage = () => {
     projectModal.onEdit(projectId, subjectId);
   };
 
-  const handleDeleteProject = async (projectId: string) => {
+  const handleDeleteProject = async (projectId: string, subjectId: string) => {
     if (!window.confirm("Are you sure you want to delete this project?")) {
       return;
     }
     try {
       setIsLoading(true);
-      // Use apiClient with offline support
-      await apiClient.delete(`/api/projects/${projectId}`, { offlineEnabled: true });
-      
+      // Delete the project
+      await apiClient.delete(`/api/projects/${projectId}`, {
+        offlineEnabled: true,
+      });
+
+      // Clear the cache for projects
+      await apiClient.clearCache(`get:/api/projects?subjectId=${subjectId}`);
+
       if (!isOnline) {
-        toast.success("Delete operation queued. Will be processed when back online.");
+        toast.success(
+          "Delete operation queued. Will be processed when back online."
+        );
       } else {
         toast.success("Project deleted successfully");
       }
@@ -230,9 +273,9 @@ const SubjectsPage = () => {
   if (isLoading) {
     return (
       <Container>
-      <div className="h-[60vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
+        <div className="h-[60vh] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
       </Container>
     );
   }
@@ -298,7 +341,6 @@ const SubjectsPage = () => {
                     >
                       View
                     </button>
-                  
                     <button
                       onClick={() => handleCreateProject(subject.id)}
                       className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-md text-sm transition"
@@ -343,7 +385,6 @@ const SubjectsPage = () => {
                 <div className="mt-6">
                   <div className="flex justify-between items-center">
                     <h3 className="text-md font-medium">Projects:</h3>
-                   
                   </div>
                   {!subjectProjects[subject.id] ||
                   subjectProjects[subject.id].length === 0 ? (
@@ -404,7 +445,9 @@ const SubjectsPage = () => {
                                 Edit
                               </button>
                               <button
-                                onClick={() => handleDeleteProject(project.id)}
+                                onClick={() =>
+                                  handleDeleteProject(project.id, subject.id)
+                                }
                                 className="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-md text-xs transition"
                               >
                                 Delete
