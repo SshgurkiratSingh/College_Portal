@@ -67,9 +67,9 @@ const AttendanceInternalModal: React.FC<AttendanceInternalModalProps> = ({
         const studentListId = subjectResponse.data.studentListId;
         
         if (studentListId) {
-          // Fetch students from the student list
-          const studentListResponse = await axios.get(`/api/student-lists/${studentListId}/students`);
-          setStudents(studentListResponse.data.students.map((student: any) => ({
+          // Fetch students directly from the attendance student list API
+          const studentListResponse = await axios.get(`/api/attendance/student-list?subjectId=${subjectId}`);
+          setStudents(studentListResponse.data.map((student: any) => ({
             ...student,
             marks: 0 // Initialize marks as 0
           })));
