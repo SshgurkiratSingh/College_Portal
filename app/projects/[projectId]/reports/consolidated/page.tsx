@@ -6,8 +6,6 @@ import axios from "axios";
 import Button from "@/app/components/Button";
 import Heading from "@/app/components/Heading";
 import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
 
 interface ConsolidatedReport {
   subject: {
@@ -181,92 +179,6 @@ const ConsolidatedReportPage = ({
     XLSX.writeFile(wb, fileName);
   };
 
-  // Function to export data to PDF
-  const exportToPDF = () => {
-    if (!reportData) return;
-
-    // Create a new PDF document
-    const doc = new jsPDF("landscape");
-
-    // Add title
-    doc.setFontSize(16);
-    doc.text("Consolidated Course Report", 14, 15);
-
-    // Add subject info
-    doc.setFontSize(12);
-    const subjectText = `${reportData.subject.name} ${
-      reportData.subject.code ? `(${reportData.subject.code})` : ""
-    }`;
-    doc.text(subjectText, 14, 25);
-
-    // Prepare data for the table
-    const tableData = reportData.studentPerformance.map((student) => {
-      const bestOfSessional = calculateBestOfSessional(student);
-      const bestSessionalText =
-        bestOfSessional.maxMarks > 0
-          ? `${bestOfSessional.score}/${bestOfSessional.maxMarks}\n(${(
-              (bestOfSessional.score / bestOfSessional.maxMarks) *
-              100
-            ).toFixed(1)}%)`
-          : "N/A";
-
-      return [
-        student.rollNo,
-        student.name,
-        ...student.assessments.map((assessment) => {
-          const totalScore = assessment.scores.reduce(
-            (sum, score) => sum + score.score,
-            0
-          );
-          const maxScore = assessment.scores.reduce(
-            (sum, score) => sum + score.maxMarks,
-            0
-          );
-          return `${totalScore}/${maxScore}\n(${(
-            (totalScore / maxScore) *
-            100
-          ).toFixed(1)}%)`;
-        }),
-        bestSessionalText,
-      ];
-    });
-
-    // Define table headers
-    const tableHeaders = [
-      "Roll No",
-      "Name",
-      ...reportData.assessmentComponents.map((comp) => comp.name),
-      "Best of Sessional",
-    ];
-
-    // Create the table
-    (doc as any).autoTable({
-      head: [tableHeaders],
-      body: tableData,
-      startY: 35,
-      styles: { fontSize: 8, cellPadding: 2 },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 30 },
-      },
-      headStyles: { fillColor: [66, 66, 66] },
-      didDrawPage: (data: any) => {
-        // Add page number at the bottom
-        doc.setFontSize(8);
-        doc.text(
-          `Page ${data.pageNumber} of ${data.pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 10,
-          { align: "center" }
-        );
-      },
-    });
-
-    // Generate PDF file and trigger download
-    const fileName = `${reportData.subject.name}_Consolidated_Report.pdf`;
-    doc.save(fileName);
-  };
-
   return (
     <div className="max-w-7xl  text-gray-800 mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex items-center mb-6">
@@ -416,13 +328,6 @@ const ConsolidatedReportPage = ({
           label="Export to Excel"
           onClick={() => {
             exportToExcel();
-          }}
-          outline
-        />
-        <Button
-          label="Export to PDF"
-          onClick={() => {
-            exportToPDF();
           }}
           outline
         />

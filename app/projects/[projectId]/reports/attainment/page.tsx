@@ -76,12 +76,14 @@ const AttainmentReportPage = ({
         >
           &larr; Back to Reports
         </button>
-        <Heading
-          title="CO Attainment Report"
-          subtitle={`${reportData.subjectName} ${
-            reportData.subjectCode ? `(${reportData.subjectCode})` : ""
-          }`}
-        />
+        <div className="text-white">
+          <Heading
+            title="CO Attainment Report"
+            subtitle={`${reportData.subjectName} ${
+              reportData.subjectCode ? `(${reportData.subjectCode})` : ""
+            }`}
+          />
+        </div>
       </div>
 
       {/* Attainment Overview Chart */}
