@@ -33,12 +33,14 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
                 {" "}
                 {currentUser.email}
               </div>
-              <div className="  font-semibold text-lg">
-              </div>
+              <div className="  font-semibold text-lg"></div>
 
               <div className="avatar">
                 <div className="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 m-4">
-                  <img src={currentUser.image || "/placeholder.png"} />
+                  <Image
+                    alt="Profile Picture"
+                    src={currentUser.image || "/placeholder.png"}
+                  />
                 </div>
               </div>
               <div className="flex flex-row items-center justify-center p-2 m-2">
@@ -49,11 +51,8 @@ const ProfileBox: React.FC<ProfileBoxProps> = ({ currentUser }) => {
                   s4
                   label="Update Profile Picture"
                 />
-              
               </div>
-              <div className="flex flex-row items-center justify-center p-2 m-2">
-              
-              </div>
+              <div className="flex flex-row items-center justify-center p-2 m-2"></div>
             </div>
           </div>
         </div>

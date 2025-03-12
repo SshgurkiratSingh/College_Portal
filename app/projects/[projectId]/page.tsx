@@ -334,8 +334,9 @@ const FastMarksEntryModalProvider = () => {
 };
 
 // Register FastMarksEntryModal at the bottom of the page to ensure it's available
-export function ModalProvider() {
+function ModalProvider() {
   return <FastMarksEntryModalProvider />;
 }
 
-export const Dynamic = "force-dynamic";
+// Use correct Next.js export for dynamic data fetching
+export const dynamic = 'force-dynamic';
